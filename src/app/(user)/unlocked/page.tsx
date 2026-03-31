@@ -1,0 +1,200 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { userApi } from '@/utils/api';
+import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+interface PreviewItem {
+  url: string | null;
+  locked: boolean;
+  type: string;
+}
+
+interface ContentItem {
+  id: string;
+  title: string;
+  type: string;
+  isFree: boolean;
+  tokenPrice: number;
+  isUnlocked: boolean;
+  likeCount: number;
+  commentCount: number;
+  totalItems: number;
+  tokenCost: number;
+  unlockedAt: string;
+  previews: PreviewItem[];
+  creator: { id: string; name: string; avatarUrl?: string };
+}
+
+function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
+  if (previews.length === 0) {
+    return <div className="h-52 bg-surface-hover flex items-center justify-center text-muted">No preview</div>;
+  }
+
+  const renderItem = (p: PreviewItem, height: string) => (
+    <div className={`${height} bg-surface-hover relative overflow-hidden`}>
+      {p.url ? (
+        <img src={p.url} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full bg-surface-hover" />
+      )}
+    </div>
+  );
+
+  if (previews.length === 1) return renderItem(previews[0], 'h-52');
+
+  if (previews.length === 2) {
+    return (
+      <div className="h-52 flex gap-px overflow-hidden">
+        {previews.map((p, i) => (
+          <div key={i} className="flex-1 relative overflow-hidden">
+            {renderItem(p, 'h-full')}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-52 grid grid-cols-2 grid-rows-2 gap-px overflow-hidden">
+      {previews.slice(0, 4).map((p, i) => (
+        <div key={i} className="relative overflow-hidden">
+          {renderItem(p, 'h-full')}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ContentCard({ item }: { item: ContentItem }) {
+  const router = useRouter();
+
+  return (
+    <div
+      onClick={() => router.push(`/content/${item.id}`)}
+      className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer group"
+    >
+      <PreviewGrid previews={item.previews} />
+      <div className="p-3">
+        <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">
+          {item.title}
+        </h3>
+        <p
+          className="text-muted text-xs mt-1 truncate hover:text-accent transition-colors"
+          onClick={(e) => { e.stopPropagation(); router.push(`/creator/${item.creator.id}`); }}
+        >{item.creator.name}</p>
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-muted text-xs">
+            {item.tokenCost > 0 ? `${item.tokenCost} tokens` : 'Free'}
+          </span>
+          <span className="text-muted text-xs">
+            {new Date(item.unlockedAt).toLocaleDateString()}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const PAGE_SIZE = 20;
+
+export default function UnlockedPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [content, setContent] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const pageRef = useRef(1);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const fetchUnlocked = useCallback(async (pageNum: number, append: boolean) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    try {
+      const res = await userApi.listUnlocked({ page: pageNum, limit: PAGE_SIZE });
+      const data = res.data as { items: ContentItem[]; total: number };
+      const newItems = data.items || [];
+      if (append) {
+        setContent(prev => [...prev, ...newItems]);
+      } else {
+        setContent(newItems);
+      }
+      setHasMore(pageNum * PAGE_SIZE < data.total);
+    } catch {
+      if (!append) setContent([]);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+    pageRef.current = 1;
+    setHasMore(true);
+    fetchUnlocked(1, false);
+  }, [authLoading, isAuthenticated, fetchUnlocked]);
+
+  // Infinite scroll with IntersectionObserver
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          pageRef.current += 1;
+          fetchUnlocked(pageRef.current, true);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, fetchUnlocked]);
+
+  if (!isAuthenticated) return <ProtectedRoute><div /></ProtectedRoute>;
+
+  return (
+    <div>
+      <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-8">
+        Unlocked Content
+      </h1>
+
+      {loading ? (
+        <div className="flex justify-center py-16"><div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" /></div>
+      ) : content.length === 0 ? (
+        <div className="text-center py-16">
+          <svg className="w-12 h-12 mx-auto text-muted mb-3" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+          <p className="text-muted text-sm">No unlocked content yet. Browse and unlock premium content!</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+            {content.map((item) => (
+              <ContentCard key={item.id} item={item} />
+            ))}
+          </div>
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-1" />
+          {loadingMore && (
+            <div className="flex justify-center py-8">
+              <div className="w-6 h-6 border-2 border-border border-t-accent rounded-full animate-spin" />
+            </div>
+          )}
+          {!hasMore && content.length > 0 && (
+            <p className="text-center text-muted text-xs py-8">No more content</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

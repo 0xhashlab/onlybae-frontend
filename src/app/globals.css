@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #09090B;
+  --color-foreground: #FAFAFA;
+  --color-primary: #FAFAFA;
+  --color-secondary: #A1A1AA;
+  --color-accent: #EAB308;
+  --color-accent-hover: #CA8A04;
+  --color-muted: #71717A;
+  --color-border: #27272A;
+  --color-surface: #18181B;
+  --color-surface-hover: #27272A;
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+
+/* Legal / policy page typography */
+.prose-custom p { color: var(--color-secondary); font-size: 0.9375rem; line-height: 1.75; margin-bottom: 1rem; }
+.prose-custom h2 { color: var(--color-foreground); font-size: 1.125rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
+.prose-custom ul { color: var(--color-secondary); font-size: 0.9375rem; line-height: 1.75; margin-bottom: 1rem; padding-left: 1.5rem; list-style-type: disc; }
+.prose-custom li { margin-bottom: 0.25rem; }
