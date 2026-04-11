@@ -104,7 +104,7 @@ export default function AgeGate() {
         </div>
 
         <p className="text-muted text-xs mt-6 leading-relaxed">
-          By entering this site, you agree to our <a href="/terms" className="text-accent hover:underline">Terms of Service</a> and <a href="/privacy" className="text-accent hover:underline">Privacy Policy</a>.
+          By entering this site, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Privacy Policy</a>.
         </p>
       </div>
     </div>

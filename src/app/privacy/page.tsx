@@ -14,7 +14,7 @@ export default function PrivacyPage() {
 
         <div className="prose-custom">
           <p>Welcome to OnlyBae.vip!</p>
-          <p>This Privacy Policy explains how BAE Media LLC (&quot;We&quot;, &quot;Us&quot;, or &quot;Our&quot;) collects, uses, and protects your personal information when you use the Website at www.onlybae.vip and the Services.</p>
+          <p>This Privacy Policy explains how BAE Media LLC (&quot;We&quot;, &quot;Us&quot;, or &quot;Our&quot;) collects, uses, and protects your personal information when you use the Website at <a href="https://www.onlybae.vip" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">www.onlybae.vip</a> and the Services.</p>
           <p>We may update this Policy periodically. Continued use constitutes acceptance of the revised Policy.</p>
 
           <h2>1. Information We Collect</h2>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
           <p>You have the right to access, correct, delete, restrict, or object to the processing of your Personal Data. EU residents may also exercise the additional rights described in the GDPR section below. To exercise any of these rights, please contact us at <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a>. We will respond within a reasonable timeframe (generally within one month).</p>
 
           <h2>7. Children</h2>
-          <p>The Services are not intended for anyone under 18 years of age. See our <Link href="/underage-policy" className="text-accent hover:underline">Underage Policy</Link> for more details.</p>
+          <p>The Services are not intended for anyone under 18 years of age. See our <Link href="/underage-policy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Underage Policy</Link> for more details.</p>
 
           <h2>8. Contact</h2>
           <p>If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us at: <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a></p>

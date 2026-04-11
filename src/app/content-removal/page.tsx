@@ -13,7 +13,7 @@ export default function ContentRemovalPage() {
         <p className="text-muted text-sm mb-8">Last updated: March 27, 2026</p>
 
         <div className="prose-custom">
-          <p>At OnlyBae.vip, operated by BAE Media LLC, we are committed to a safe, lawful, and respectful environment. All content (characters, images, galleries, and videos) is pre-created, fictional, and AI-generated. This Content Removal Policy covers prohibited content, moderation, removal procedures, and how to submit complaints.</p>
+          <p>At OnlyBae.vip, operated by BAE Media LLC, we are committed to maintaining a safe, lawful, and respectful environment. All content (characters, images, galleries, and videos) is pre-created, fictional, and entirely AI-generated. This Content Removal Policy covers prohibited content, moderation, removal procedures, complaint handling, and appeals.</p>
 
           <h2>1. Prohibited (Blocked) Content</h2>
           <p>The following content is strictly forbidden and will not be tolerated:</p>
@@ -23,38 +23,47 @@ export default function ContentRemovalPage() {
             <li>Hate speech, discrimination, or harassment;</li>
             <li>Content encouraging self-harm, suicide, or terrorism;</li>
             <li>Infringement of privacy, copyright, trademarks, or impersonation of real persons/celebrities;</li>
-            <li>Any other content violating applicable law or our Terms.</li>
+            <li>Any other content violating applicable law or our <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Terms of Service</Link>.</li>
           </ul>
-          <p>Although users cannot generate new visual content, any chat interactions that attempt to solicit or describe prohibited material may still be flagged.</p>
+          <p>Although users cannot generate new visual content, any chat interactions that attempt to solicit or describe prohibited material may still be flagged and reviewed.</p>
 
           <h2>2. Content Moderation</h2>
-          <p>We employ moderation tools to review flagged chat messages and ensure platform content complies with this policy. Violations may lead to content removal (where applicable), warnings, account suspension, or termination.</p>
+          <p>We employ moderation tools to review flagged chat messages and ensure all platform content complies with this policy. Violations may lead to content removal (where applicable), warnings, account suspension, or permanent termination.</p>
 
           <h2>3. Content Removal Process</h2>
-          <p>If any pre-existing platform content unintentionally resembles a real person or violates this Policy:</p>
+          <p>If any pre-existing platform content unintentionally resembles a real person or otherwise violates this Policy:</p>
           <ul>
             <li>Contact us at <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a>.</li>
-            <li>Provide your name, email, description of the issue, and supporting evidence (if applicable).</li>
-            <li>We will review and respond within 5 business days.</li>
+            <li>Provide your full name, email address, a detailed description of the issue, and any supporting evidence (e.g., screenshots or links).</li>
+            <li>We will review the request and respond within <strong className="text-foreground">5 business days</strong>.</li>
             <li>Upon valid verification, the content will be removed promptly while maintaining user privacy.</li>
           </ul>
 
-          <h2>4. Complaint Procedure</h2>
+          <h2>4. Appeals / Takedown Appeal Process</h2>
+          <p>If you believe you have been depicted in our content and wish to appeal the removal (or non-removal) of such content, or if you disagree with any decision made under this policy:</p>
           <ul>
-            <li>Submit complaints via <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a></li>
-            <li>Include full name, email, detailed description, date/time, and any screenshots.</li>
-            <li>We acknowledge receipt within 24 hours and aim to resolve within 5 business days.</li>
-            <li>You will be notified of the outcome.</li>
+            <li>Notify us by sending an email to <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a>.</li>
+            <li>Clearly state the grounds for your appeal and include any relevant evidence.</li>
+          </ul>
+          <p>We will review your appeal within <strong className="text-foreground">5 business days</strong> and provide a written response.</p>
+          <p>If there is still a disagreement regarding the appeal, we will allow the matter to be resolved by a neutral third-party body at our expense. You will be informed of the details of this process in our response.</p>
+
+          <h2>5. Complaint Procedure</h2>
+          <ul>
+            <li>Submit complaints via <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a>.</li>
+            <li>Include your full name, email, detailed description of the issue, date/time (if relevant), and any screenshots.</li>
+            <li>We acknowledge receipt within <strong className="text-foreground">24 hours</strong> and aim to resolve the matter within <strong className="text-foreground">5 business days</strong>.</li>
+            <li>You will be notified of the outcome in writing.</li>
           </ul>
 
-          <h2>5. Privacy of Requests</h2>
-          <p>All complaints and removal requests are handled confidentially.</p>
+          <h2>6. Privacy of Requests</h2>
+          <p>All complaints, removal requests, and appeals are handled confidentially and will not be disclosed to third parties except as required by law.</p>
 
-          <h2>6. Termination</h2>
-          <p>We reserve the right to suspend or terminate accounts for violations.</p>
+          <h2>7. Termination</h2>
+          <p>We reserve the right to suspend or terminate user accounts for any violations of this policy or our Terms of Service.</p>
 
-          <h2>7. Contact</h2>
-          <p>Questions about this Policy: <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a></p>
+          <h2>8. Contact</h2>
+          <p>For questions about this Content Removal Policy, complaints, or appeals, please contact us at: <a href="mailto:support@onlybae.vip" className="text-accent hover:underline">support@onlybae.vip</a></p>
         </div>
       </div>
     </div>

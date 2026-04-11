@@ -16,10 +16,10 @@ export default function UnderagePolicyPage() {
           <p>At OnlyBae.vip, operated by BAE Media LLC, we are committed to preventing access by anyone under 18 (or the legal age in their jurisdiction). The Services contain adult-oriented, AI-generated content and are strictly for users 18 and older.</p>
 
           <h2>1. Age Verification</h2>
-          <p>Upon visiting the Website, you will encounter an age gate requiring confirmation that you are 18 or older. Providing false age information violates our <Link href="/terms" className="text-accent hover:underline">Terms</Link> and may result in immediate termination.</p>
+          <p>Upon visiting the Website, you will encounter an age gate requiring confirmation that you are 18 or older. Providing false age information violates our <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Terms</Link> and may result in immediate termination.</p>
 
           <h2>2. Content Responsibility</h2>
-          <p>All visual content on the platform is pre-created. Users cannot generate new images or videos. You are responsible for your chat messages. We strictly prohibit any attempt to solicit, describe, or engage in content resembling minors or involving child exploitation (see <Link href="/content-removal" className="text-accent hover:underline">Content Removal Policy</Link>). Such attempts will trigger moderation and may result in account suspension or termination.</p>
+          <p>All visual content on the platform is pre-created. Users cannot generate new images or videos. You are responsible for your chat messages. We strictly prohibit any attempt to solicit, describe, or engage in content resembling minors or involving child exploitation (see <Link href="/content-removal" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Content Removal Policy</Link>). Such attempts will trigger moderation and may result in account suspension or termination.</p>
 
           <h2>3. Content Moderation</h2>
           <p>Moderation tools monitor for underage-related violations in chats and platform content. Flagged violations lead to review and appropriate action.</p>
