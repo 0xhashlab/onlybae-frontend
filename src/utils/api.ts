@@ -97,12 +97,45 @@ export const userApi = {
     if (params?.limit) qs.set('limit', String(params.limit));
     return request<any>(`/api/user/unlocked?${qs}`);
   },
-  browseSeries: (params?: { page?: number; limit?: number }) => {
+  browseSeries: (params?: { page?: number; limit?: number; type?: 'normal' | 'reels' | 'manga' }) => {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.type) qs.set('type', params.type);
     return request<any>(`/api/user/series?${qs}`);
   },
   getSeriesDetail: (id: string) => request<any>(`/api/user/series/${id}`),
+  browseReels: (params?: { page?: number; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    return request<{ items: ReelItem[]; total: number; page: number; limit: number }>(`/api/user/reels?${qs}`);
+  },
   getCdnCookies: () => request('/api/user/cdn-cookies'),
 };
+
+export interface ReelItem {
+  id: string;
+  title: string;
+  description: string | null;
+  tokenPrice: number;
+  isFree: boolean;
+  isUnlocked: boolean;
+  likeCount: number;
+  commentCount: number;
+  liked: boolean;
+  favorited: boolean;
+  creator: { id: string; name: string; avatarUrl?: string };
+  series: { id: string; title: string } | null;
+  episodeNumber: number | null;
+  createdAt: string;
+  coverUrl: string | null;
+  video: {
+    url: string | null;
+    locked: boolean;
+    width: number | null;
+    height: number | null;
+    durationSec: number | null;
+    orientation: 'portrait' | 'landscape' | 'square' | null;
+  } | null;
+}
