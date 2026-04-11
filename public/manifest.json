@@ -1,0 +1,44 @@
+{
+  "name": "OnlyBae",
+  "short_name": "OnlyBae",
+  "description": "Premium content, reels, and manga from your favorite creators.",
+  "start_url": "/browse",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
+  "lang": "en",
+  "categories": ["entertainment", "social", "lifestyle"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse",
+      "url": "/browse",
+      "description": "Browse the latest content"
+    },
+    {
+      "name": "Reels",
+      "url": "/reels",
+      "description": "Watch short videos"
+    },
+    {
+      "name": "Manga",
+      "url": "/manga",
+      "description": "Read manga chapters"
+    }
+  ]
+}
