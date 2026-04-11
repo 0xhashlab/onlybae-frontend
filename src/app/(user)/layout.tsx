@@ -2,20 +2,34 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGrip, faUser, faWallet, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket } from '@fortawesome/free-solid-svg-icons';
+import { faGrip, faUser, faWallet, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 import AgeGate from '@/components/AgeGate';
 
-const publicMenuItems = [
+type MenuItem = { key: string; icon: React.ReactNode; label: string; authOnly?: boolean };
+
+const publicMenuItems: MenuItem[] = [
   { key: '/browse', icon: <FontAwesomeIcon icon={faGrip} className="w-4 h-4" />, label: 'Browse' },
+  { key: '/reels', icon: <FontAwesomeIcon icon={faVideo} className="w-4 h-4" />, label: 'Reels' },
+  { key: '/manga', icon: <FontAwesomeIcon icon={faBookOpen} className="w-4 h-4" />, label: 'Manga' },
   { key: '/series', icon: <FontAwesomeIcon icon={faBook} className="w-4 h-4" />, label: 'Series' },
 ];
 
-const authMenuItems = [
-  { key: '/unlocked', icon: <FontAwesomeIcon icon={faLockOpen} className="w-4 h-4" />, label: 'Unlocked' },
-  { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />, label: 'Favorites' },
-  { key: '/wallet', icon: <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />, label: 'Wallet' },
-  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-4 h-4" />, label: 'Profile' },
+const authMenuItems: MenuItem[] = [
+  { key: '/unlocked', icon: <FontAwesomeIcon icon={faLockOpen} className="w-4 h-4" />, label: 'Unlocked', authOnly: true },
+  { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />, label: 'Favorites', authOnly: true },
+  { key: '/wallet', icon: <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />, label: 'Wallet', authOnly: true },
+  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-4 h-4" />, label: 'Profile', authOnly: true },
+];
+
+// Mobile bottom tab bar — compact, high-frequency actions only.
+const mobileTabs: MenuItem[] = [
+  { key: '/browse', icon: <FontAwesomeIcon icon={faGrip} className="w-5 h-5" />, label: 'Browse' },
+  { key: '/reels', icon: <FontAwesomeIcon icon={faVideo} className="w-5 h-5" />, label: 'Reels' },
+  { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />, label: 'Favorites', authOnly: true },
+  { key: '/wallet', icon: <FontAwesomeIcon icon={faWallet} className="w-5 h-5" />, label: 'Wallet', authOnly: true },
+  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-5 h-5" />, label: 'Profile', authOnly: true },
 ];
 
 const membershipColors: Record<string, string> = {
@@ -29,13 +43,25 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   const { user, isAuthenticated, loading, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const menuItems = [...publicMenuItems, ...(isAuthenticated ? authMenuItems : [])];
+  const visibleTabs = mobileTabs.filter(t => !t.authOnly || isAuthenticated);
 
-  const renderNavButton = (item: { key: string; icon: React.ReactNode; label: string }) => (
+  // Close drawer whenever the route changes.
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  const handleNav = (path: string) => {
+    router.push(path);
+    setDrawerOpen(false);
+  };
+
+  const renderNavButton = (item: MenuItem) => (
     <button
       key={item.key}
-      onClick={() => router.push(item.key)}
+      onClick={() => handleNav(item.key)}
       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150 cursor-pointer ${
         pathname === item.key
           ? 'bg-surface-hover text-foreground font-medium border-r-2 border-accent'
@@ -47,6 +73,59 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     </button>
   );
 
+  const renderSidebarContent = () => (
+    <>
+      <div className="h-14 flex items-center justify-center gap-2 border-b border-border">
+        <img src="/logo.jpg" alt="OnlyBae" className="w-8 h-8 rounded-full" />
+        <span className="text-xl font-semibold text-foreground tracking-tight">OnlyBae</span>
+      </div>
+
+      {isAuthenticated && user && (
+        <div className="px-4 py-3 border-b border-border">
+          <div className="text-foreground text-sm font-medium truncate">{user.name}</div>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${membershipColors[user.membershipLevel] || membershipColors.free}`}>
+              {user.membershipLevel}
+            </span>
+            <span className="text-muted text-xs">{user.tokenBalance} tokens</span>
+          </div>
+        </div>
+      )}
+
+      <nav className="flex-1 py-2 overflow-y-auto">
+        {menuItems.map(renderNavButton)}
+      </nav>
+
+      <div className="border-t border-border py-2">
+        {isAuthenticated ? (
+          <button
+            onClick={() => { logout(); router.push('/login'); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} className="w-4 h-4" />
+            Logout
+          </button>
+        ) : (
+          <button
+            onClick={() => handleNav('/login')}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faRightToBracket} className="w-4 h-4" />
+            Login
+          </button>
+        )}
+      </div>
+
+      <div className="border-t border-border px-4 py-3 flex flex-wrap gap-x-3 gap-y-1">
+        <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">Terms</a>
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">Privacy</a>
+        <a href="/content-removal" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">Content Removal</a>
+        <a href="/underage-policy" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">18+</a>
+        <a href="/complaints" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">Complaints</a>
+      </div>
+    </>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -56,65 +135,83 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen bg-background">
       <AgeGate />
-      {/* Sidebar */}
-      <aside className="w-56 bg-surface border-r border-border flex flex-col fixed h-full">
-        <div className="h-14 flex items-center justify-center gap-2 border-b border-border">
-          <img src="/logo.jpg" alt="OnlyBae" className="w-8 h-8 rounded-full" />
-          <span className="text-xl font-semibold text-foreground tracking-tight">
-            OnlyBae
-          </span>
-        </div>
 
-        {isAuthenticated && user && (
-          <div className="px-4 py-3 border-b border-border">
-            <div className="text-foreground text-sm font-medium truncate">{user.name}</div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${membershipColors[user.membershipLevel] || membershipColors.free}`}>
-                {user.membershipLevel}
-              </span>
-              <span className="text-muted text-xs">{user.tokenBalance} tokens</span>
-            </div>
-          </div>
-        )}
-
-        <nav className="flex-1 py-2">
-          {menuItems.map(renderNavButton)}
-        </nav>
-
-        <div className="border-t border-border py-2">
-          {isAuthenticated ? (
-            <button
-              onClick={() => { logout(); router.push('/login'); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faRightFromBracket} className="w-4 h-4" />
-              Logout
-            </button>
-          ) : (
-            <button
-              onClick={() => router.push('/login')}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faRightToBracket} className="w-4 h-4" />
-              Login
-            </button>
-          )}
-        </div>
-
-        <div className="border-t border-border px-4 py-3 flex flex-wrap gap-x-3 gap-y-1">
-          <a href="/terms" className="text-muted hover:text-foreground text-[11px] transition-colors">Terms</a>
-          <a href="/privacy" className="text-muted hover:text-foreground text-[11px] transition-colors">Privacy</a>
-          <a href="/content-removal" className="text-muted hover:text-foreground text-[11px] transition-colors">DMCA</a>
-          <a href="/underage-policy" className="text-muted hover:text-foreground text-[11px] transition-colors">18+</a>
-        </div>
+      {/* Desktop sidebar (md+) */}
+      <aside className="hidden md:flex w-56 bg-surface border-r border-border flex-col fixed h-full z-30">
+        {renderSidebarContent()}
       </aside>
 
+      {/* Mobile top bar */}
+      <header className="md:hidden fixed top-0 inset-x-0 z-30 h-14 bg-surface/95 backdrop-blur border-b border-border flex items-center px-3 gap-3">
+        <button
+          aria-label="Open menu"
+          onClick={() => setDrawerOpen(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-surface-hover text-foreground cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faBars} className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <img src="/logo.jpg" alt="OnlyBae" className="w-7 h-7 rounded-full" />
+          <span className="text-base font-semibold text-foreground truncate">OnlyBae</span>
+        </div>
+        {isAuthenticated && user && (
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${membershipColors[user.membershipLevel] || membershipColors.free}`}>
+              {user.membershipLevel}
+            </span>
+            <span className="text-muted text-xs">{user.tokenBalance}</span>
+          </div>
+        )}
+      </header>
+
+      {/* Mobile drawer (slide-in from left) */}
+      {drawerOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <aside className="relative w-64 bg-surface border-r border-border flex flex-col h-full">
+            <button
+              aria-label="Close menu"
+              onClick={() => setDrawerOpen(false)}
+              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-hover text-foreground cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
+            </button>
+            {renderSidebarContent()}
+          </aside>
+        </div>
+      )}
+
       {/* Main content */}
-      <main className="flex-1 ml-56 p-8">
+      <main className="flex-1 md:ml-56 p-4 md:p-8 pt-[4.5rem] md:pt-8 pb-20 md:pb-8">
         {children}
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur border-t border-border flex items-stretch"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {visibleTabs.map(tab => {
+          const active = pathname === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => handleNav(tab.key)}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 cursor-pointer transition-colors ${
+                active ? 'text-accent' : 'text-muted hover:text-foreground'
+              }`}
+            >
+              {tab.icon}
+              <span className="text-[10px] font-medium">{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 }

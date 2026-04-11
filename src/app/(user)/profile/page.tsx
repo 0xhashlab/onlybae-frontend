@@ -43,7 +43,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-8">
+      <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-6 md:mb-8">
         Profile
       </h1>
 

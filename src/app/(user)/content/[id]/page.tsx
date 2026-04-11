@@ -4,12 +4,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { userApi } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
+import MediaPlayer from '@/components/MediaPlayer';
 
 interface ContentDetail {
   id: string;
   title: string;
   description: string;
   type: string;
+  coverUrl?: string | null;
   isFree: boolean;
   tokenPrice: number;
   isUnlocked: boolean;
@@ -19,8 +21,8 @@ interface ContentDetail {
   isFavorited: boolean;
   creator: { id: string; name: string; avatarUrl?: string };
   createdAt: string;
-  series?: { id: string; title: string };
-  episodeNumber?: number;
+  series?: { id: string; title: string; type?: 'normal' | 'reels' };
+  orderInSeries?: number;
   workflowJson?: string;
 }
 
@@ -31,6 +33,10 @@ interface ContentItemData {
   sortOrder: number;
   locked: boolean;
   isFreePreview: boolean;
+  width?: number | null;
+  height?: number | null;
+  durationSec?: number | null;
+  orientation?: 'portrait' | 'landscape' | 'square' | null;
 }
 
 function Lightbox({ items, index, onClose, onPrev, onNext }: {
@@ -96,11 +102,18 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
       )}
 
       {/* Content */}
-      <div className="max-w-[90vw] max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+      <div className="max-w-[95vw] max-h-[90vh] flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
         {item.type === 'image' ? (
           <img src={item.url!} alt="" className="max-w-full max-h-[90vh] object-contain" />
         ) : (
-          <video src={item.url!} controls autoPlay className="max-w-full max-h-[90vh]" />
+          <MediaPlayer
+            url={item.url!}
+            width={item.width}
+            height={item.height}
+            orientation={item.orientation}
+            autoPlay
+            className="max-h-[90vh]"
+          />
         )}
       </div>
     </div>
@@ -298,26 +311,31 @@ export default function ContentDetailPage() {
       {/* Content info card */}
       <div className="bg-surface border border-border rounded-xl overflow-hidden mb-8">
         <div className="flex flex-col md:flex-row">
-          {/* Hero image */}
-          {items.length > 0 && items[0].url && (
-            <div className="w-full md:w-80 h-64 bg-surface-hover relative overflow-hidden flex-shrink-0">
-              <img src={items[0].url} alt={content.title} className="w-full h-full object-cover" />
-              {items[0].locked && (
-                <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Hero image: prefer the content's own cover; fall back to the first viewable item. */}
+          {(() => {
+            const heroUrl = content.coverUrl || items[0]?.url;
+            if (!heroUrl) return null;
+            const heroLocked = !content.coverUrl && items[0]?.locked;
+            return (
+              <div className="w-full md:w-80 h-56 md:h-64 bg-surface-hover relative overflow-hidden flex-shrink-0">
+                <img src={heroUrl} alt={content.title} className="w-full h-full object-cover" />
+                {heroLocked && (
+                  <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Details */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-4 md:p-6">
             {content.series && (
               <a href={`/series/${content.series.id}`} className="text-xs text-accent hover:underline">
-                Part of: {content.series.title} {content.episodeNumber ? `· Episode ${content.episodeNumber}` : ''}
+                Part of: {content.series.title}{content.orderInSeries ? ` · #${content.orderInSeries}` : ''}
               </a>
             )}
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-2">
+            <h1 className="text-xl md:text-2xl font-semibold text-foreground tracking-tight mb-2">
               {content.title}
             </h1>
             <p className="text-muted text-sm mb-5">{content.description}</p>
@@ -458,7 +476,12 @@ export default function ContentDetailPage() {
                   </div>
                 </>
               ) : (
-                <video src={item.url!} controls className="w-full h-full object-cover" />
+                <div className="w-full h-full flex items-center justify-center bg-black relative">
+                  <video src={item.url!} className="w-full h-full object-cover" muted playsInline />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <svg className="w-10 h-10 text-white/80 drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  </div>
+                </div>
               )
             )}
           </div>

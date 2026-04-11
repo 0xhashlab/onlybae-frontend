@@ -68,7 +68,7 @@ export default function SeriesBrowse() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-8">Series</h1>
+      <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-6 md:mb-8">Series</h1>
 
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-10 h-10 border-2 border-border border-t-accent rounded-full animate-spin" /></div>
@@ -94,7 +94,7 @@ export default function SeriesBrowse() {
                 </div>
                 <div className="p-3">
                   <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">{s.title}</h3>
-                  <p className="text-xs text-muted mt-1">{s.creator?.name} · {s.episodeCount || 0} episodes</p>
+                  <p className="text-xs text-muted mt-1">{s.creator?.name} · {s.contentCount || 0} contents</p>
                 </div>
               </div>
             ))}
