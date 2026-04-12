@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 
-// Chrome/Edge/Android fire `beforeinstallprompt`. iOS Safari does not — users
-// must tap Share → Add to Home Screen manually, so we show a separate hint.
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-}
+// Subtle banner that auto-shows on first visit to encourage installation.
+// Explicit install button lives on the Profile page via AddToHomeScreenButton;
+// this banner is for discovery when the user hasn't dug into settings yet.
 
 type Mode = 'hidden' | 'install-button' | 'ios-hint';
 
@@ -15,87 +13,55 @@ const DISMISS_KEY = 'onlybae:pwa:install-dismissed';
 // Re-prompt after a week if the user dismissed but never installed.
 const DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-const isStandalone = () => {
-  if (typeof window === 'undefined') return false;
-  const navStandalone = (window.navigator as Navigator & { standalone?: boolean }).standalone;
-  return window.matchMedia('(display-mode: standalone)').matches || navStandalone === true;
-};
-
-const isIosSafari = () => {
-  if (typeof window === 'undefined') return false;
-  const ua = window.navigator.userAgent;
-  const isIos = /iPad|iPhone|iPod/.test(ua);
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-  return isIos && isSafari;
-};
-
 export default function InstallPrompt() {
+  const { installed, canPromptInstall, needsIosInstructions, promptInstall } = usePwaInstall();
   const [mode, setMode] = useState<Mode>('hidden');
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (installed) {
+      setMode('hidden');
+      return;
+    }
 
-    // Already installed — nothing to do.
-    if (isStandalone()) return;
-
-    // Recently dismissed — stay silent.
+    // Respect recent dismissal.
     try {
       const raw = localStorage.getItem(DISMISS_KEY);
       if (raw) {
         const dismissedAt = Number(raw);
-        if (Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_TTL_MS) return;
+        if (Number.isFinite(dismissedAt) && Date.now() - dismissedAt < DISMISS_TTL_MS) {
+          setMode('hidden');
+          return;
+        }
       }
     } catch { /* ignore */ }
 
-    // iOS fallback: show a "Add to Home Screen" hint after a short delay.
-    if (isIosSafari()) {
+    if (canPromptInstall) {
+      setMode('install-button');
+    } else if (needsIosInstructions) {
+      // iOS: show the hint after a short delay so it doesn't shout on first paint.
       const timer = window.setTimeout(() => setMode('ios-hint'), 3000);
       return () => window.clearTimeout(timer);
-    }
-
-    // Chrome / Edge / Android: wait for the browser to fire beforeinstallprompt.
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e as BeforeInstallPromptEvent);
-      setMode('install-button');
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // If the app is installed during this session, hide the banner.
-    const installedHandler = () => {
+    } else {
       setMode('hidden');
-      setDeferred(null);
-    };
-    window.addEventListener('appinstalled', installedHandler);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installedHandler);
-    };
-  }, []);
+    }
+  }, [installed, canPromptInstall, needsIosInstructions]);
 
   if (mode === 'hidden') return null;
 
   const dismiss = () => {
     try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* ignore */ }
     setMode('hidden');
-    setDeferred(null);
   };
 
   const install = async () => {
-    if (!deferred) return;
-    await deferred.prompt();
-    const choice = await deferred.userChoice;
-    if (choice.outcome === 'accepted') {
+    const outcome = await promptInstall();
+    if (outcome === 'accepted') {
       setMode('hidden');
     } else {
       dismiss();
     }
-    setDeferred(null);
   };
 
-  // Shared shell — sits above the mobile bottom tab bar, respects safe-area.
   return (
     <div
       className="fixed left-3 right-3 md:left-auto md:right-4 md:max-w-sm z-[80] pointer-events-none"

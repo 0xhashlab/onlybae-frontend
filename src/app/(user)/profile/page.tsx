@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useCallback } from 'react';
 import { userApi } from '@/utils/api';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AddToHomeScreenButton from '@/components/AddToHomeScreenButton';
 
 const membershipStyles: Record<string, string> = {
   free: 'bg-zinc-500/10 text-zinc-400',
@@ -190,6 +191,17 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Install as an app */}
+      <div className="bg-surface border border-border rounded-xl max-w-xl mb-6 p-4 md:p-5 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">Install as an app</p>
+          <p className="text-xs text-muted mt-0.5 leading-relaxed">
+            Add OnlyBae to your home screen for a full-screen experience, quicker launch, and no browser bars.
+          </p>
+        </div>
+        <AddToHomeScreenButton />
       </div>
 
       {/* Wallet section */}
