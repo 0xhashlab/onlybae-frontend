@@ -12,12 +12,28 @@ export default function VersionBadge({ className = '' }: { className?: string })
   if (!version) return null;
 
   const handleCopy = async () => {
+    let ok = false;
     try {
-      await navigator.clipboard.writeText(version);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(version);
+        ok = true;
+      } else {
+        // Fallback for browsers that block the Clipboard API (Firefox private mode,
+        // older Safari, non-HTTPS contexts). A temporary textarea + execCommand still works.
+        const el = document.createElement('textarea');
+        el.value = version;
+        el.setAttribute('readonly', '');
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        document.body.removeChild(el);
+      }
+    } catch { /* ignore */ }
+    if (ok) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard API unavailable — silently ignore */
     }
   };
 

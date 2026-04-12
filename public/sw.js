@@ -11,13 +11,12 @@
  * Bump CACHE_VERSION whenever the app shell changes in a breaking way.
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const SHELL_CACHE = `onlybae-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `onlybae-static-${CACHE_VERSION}`;
 
 // Things we want available even when offline.
 const SHELL_ASSETS = [
-  '/logo.jpg',
   '/logo.jpg',
   '/offline.html',
 ];

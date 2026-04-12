@@ -26,6 +26,8 @@ export default function PWARegister() {
 
     let intervalId: number | null = null;
     let pendingReload = false;
+    // Track listeners installed during async SW registration so cleanup can remove them.
+    let visibilityHandler: (() => void) | null = null;
 
     const scheduleReload = () => {
       // Already scheduled? Don't double-up.
@@ -82,12 +84,12 @@ export default function PWARegister() {
 
           // Also check immediately when the tab regains focus after being hidden
           // for a while — common on mobile where users switch apps constantly.
-          const onVisibility = () => {
+          visibilityHandler = () => {
             if (document.visibilityState === 'visible') {
               registration.update().catch(() => { /* best effort */ });
             }
           };
-          document.addEventListener('visibilitychange', onVisibility);
+          document.addEventListener('visibilitychange', visibilityHandler);
         })
         .catch((err) => {
           console.warn('Service worker registration failed:', err);
@@ -103,6 +105,7 @@ export default function PWARegister() {
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
       if (intervalId !== null) window.clearInterval(intervalId);
+      if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
     };
   }, []);
 

@@ -184,6 +184,8 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+      role="dialog"
+      aria-modal="true"
       onClick={onClose}
       style={{ touchAction: 'none' }}
     >

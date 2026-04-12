@@ -63,6 +63,9 @@ export default function EdgeSwipeBack({ onRoot }: { onRoot?: () => void }) {
       if (e.touches.length !== 1) return;
       const t = e.touches[0];
       if (t.clientX > EDGE_PX) return;
+      // If a modal (lightbox, comments drawer, install prompt, etc.) is open,
+      // it has its own swipe/close handling. Let it manage the gesture.
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
       drag = {
         startX: t.clientX,
         startY: t.clientY,

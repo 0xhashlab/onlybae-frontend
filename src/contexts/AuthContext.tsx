@@ -214,14 +214,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // regains focus, for users who backgrounded the app for hours.
   useEffect(() => {
     if (!isAuthenticated) return;
-    const token = getToken();
-    if (!token) return;
+    // Re-read the token on every fire so we never cache a stale one across
+    // a logout/login in the same session.
+    const refresh = () => {
+      const t = getToken();
+      if (t) fetchCdnCookies(t);
+    };
+    if (!getToken()) return;
 
     const REFRESH_INTERVAL_MS = 40 * 60 * 1000;
-    const interval = window.setInterval(() => fetchCdnCookies(token), REFRESH_INTERVAL_MS);
+    const interval = window.setInterval(refresh, REFRESH_INTERVAL_MS);
 
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') fetchCdnCookies(token);
+      if (document.visibilityState === 'visible') refresh();
     };
     document.addEventListener('visibilitychange', onVisibility);
 
