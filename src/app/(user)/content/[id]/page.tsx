@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { userApi } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import MediaPlayer from '@/components/MediaPlayer';
@@ -39,6 +39,14 @@ interface ContentItemData {
   orientation?: 'portrait' | 'landscape' | 'square' | null;
 }
 
+// Thresholds for swipe detection on touch devices.
+// SWIPE_COMMIT: drag beyond this fraction of viewport → commit the navigation
+// on release. Below that → snap back.
+// SWIPE_VELOCITY_PX_PER_MS: or if the user flicks fast enough, commit even
+// with a small drag distance.
+const SWIPE_COMMIT = 0.22;
+const SWIPE_VELOCITY = 0.5;
+
 function Lightbox({ items, index, onClose, onPrev, onNext }: {
   items: ContentItemData[];
   index: number;
@@ -47,6 +55,13 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
   onNext: () => void;
 }) {
   const item = items[index];
+
+  // Drag state for touch swipe.
+  // Horizontal drag cycles images; vertical drag closes the lightbox (iOS Photos style).
+  // Only touch-typed pointers drive this — mouse / trackpad on desktop keeps clicking arrows.
+  const [drag, setDrag] = useState<{ x: number; y: number; axis: 'x' | 'y' | null } | null>(null);
+  const dragStart = useRef<{ x: number; y: number; t: number; pointerType: string } | null>(null);
+  const [exiting, setExiting] = useState<'left' | 'right' | 'down' | null>(null);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -58,14 +73,131 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose, onPrev, onNext]);
 
+  // Reset drag whenever the active item changes (e.g. after committing a swipe).
+  useEffect(() => {
+    setDrag(null);
+    setExiting(null);
+  }, [index]);
+
   if (!item) return null;
 
+  const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    // Only respond to touch. Mouse users have arrow buttons + keyboard.
+    if (e.pointerType !== 'touch') return;
+    dragStart.current = { x: e.clientX, y: e.clientY, t: Date.now(), pointerType: e.pointerType };
+    setDrag({ x: 0, y: 0, axis: null });
+  };
+
+  const onPointerMove: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    if (!dragStart.current || dragStart.current.pointerType !== 'touch') return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+
+    // Lock to an axis once movement exceeds a small deadzone, so the direction
+    // doesn't wobble mid-swipe.
+    let axis = drag?.axis ?? null;
+    if (!axis && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    }
+
+    // On horizontal axis: if there's no neighbor in that direction, apply
+    // rubber-band resistance so it's obvious the user hit a boundary.
+    let constrainedX = dx;
+    if (axis === 'x') {
+      if ((dx > 0 && index === 0) || (dx < 0 && index === items.length - 1)) {
+        constrainedX = dx / 3;
+      }
+    }
+    // On vertical: only allow drag-down-to-close, not up.
+    const constrainedY = axis === 'y' ? Math.max(0, dy) : 0;
+
+    setDrag({ x: axis === 'x' ? constrainedX : 0, y: constrainedY, axis });
+  };
+
+  const onPointerEnd: React.PointerEventHandler<HTMLDivElement> = () => {
+    if (!dragStart.current || dragStart.current.pointerType !== 'touch') return;
+    const start = dragStart.current;
+    dragStart.current = null;
+
+    const current = drag ?? { x: 0, y: 0, axis: null };
+    const elapsed = Math.max(1, Date.now() - start.t);
+
+    if (current.axis === 'x') {
+      const vw = window.innerWidth;
+      const velocity = Math.abs(current.x) / elapsed;
+      const shouldCommit = Math.abs(current.x) / vw > SWIPE_COMMIT || velocity > SWIPE_VELOCITY;
+
+      if (shouldCommit && current.x < 0 && index < items.length - 1) {
+        // Swipe-left → next
+        setExiting('left');
+        window.setTimeout(onNext, 180);
+        return;
+      }
+      if (shouldCommit && current.x > 0 && index > 0) {
+        // Swipe-right → prev
+        setExiting('right');
+        window.setTimeout(onPrev, 180);
+        return;
+      }
+    } else if (current.axis === 'y') {
+      const vh = window.innerHeight;
+      const velocity = current.y / elapsed;
+      if (current.y / vh > SWIPE_COMMIT || velocity > SWIPE_VELOCITY) {
+        setExiting('down');
+        window.setTimeout(onClose, 180);
+        return;
+      }
+    }
+
+    // Not enough → snap back.
+    setDrag(null);
+  };
+
+  // Content transform combines in-progress drag and the exit animation.
+  let transform = 'translate(0, 0)';
+  let transition = 'none';
+  let opacity = 1;
+  if (exiting === 'left') {
+    transform = `translate(-100vw, 0)`;
+    transition = 'transform 180ms ease-out';
+  } else if (exiting === 'right') {
+    transform = `translate(100vw, 0)`;
+    transition = 'transform 180ms ease-out';
+  } else if (exiting === 'down') {
+    transform = `translate(0, 100vh)`;
+    transition = 'transform 180ms ease-out, opacity 180ms ease-out';
+    opacity = 0;
+  } else if (drag) {
+    transform = `translate(${drag.x}px, ${drag.y}px)`;
+    transition = drag.axis ? 'none' : 'transform 180ms ease-out';
+    // Fade backdrop as the user drags down to close.
+    if (drag.axis === 'y' && drag.y > 0) {
+      opacity = Math.max(0.4, 1 - drag.y / (window.innerHeight * 0.8));
+    }
+  }
+
+  // Fade the whole backdrop when dragging down, so dismissing feels natural.
+  const backdropOpacity = drag?.axis === 'y' && drag.y > 0
+    ? Math.max(0.4, 1 - drag.y / (window.innerHeight * 0.8))
+    : exiting === 'down' ? 0 : 1;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+      onClick={onClose}
+      style={{ touchAction: 'none' }}
+    >
+      {/* Backdrop — fades independently so content can track the finger. */}
+      <div
+        className="absolute inset-0 bg-black/90"
+        style={{ opacity: backdropOpacity, transition: exiting ? 'opacity 180ms ease-out' : 'none' }}
+      />
+
       {/* Close button */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 text-white/70 hover:text-white z-10 cursor-pointer"
+        style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
       >
         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -73,27 +205,30 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
       </button>
 
       {/* Counter */}
-      <div className="absolute top-4 left-4 text-white/70 text-sm">
+      <div
+        className="absolute top-4 left-4 text-white/70 text-sm z-10"
+        style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
+      >
         {index + 1} / {items.length}
       </div>
 
-      {/* Previous */}
+      {/* Prev / Next — hidden on touch devices (hover: none) where swipe takes over. */}
       {index > 0 && (
         <button
           onClick={(e) => { e.stopPropagation(); onPrev(); }}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer"
+          className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer z-10"
+          aria-label="Previous"
         >
           <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
       )}
-
-      {/* Next */}
       {index < items.length - 1 && (
         <button
           onClick={(e) => { e.stopPropagation(); onNext(); }}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer"
+          className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer z-10"
+          aria-label="Next"
         >
           <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -101,10 +236,25 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
         </button>
       )}
 
-      {/* Content */}
-      <div className="max-w-[95vw] max-h-[90vh] flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+      {/* Content — draggable by touch. */}
+      <div
+        className="relative max-w-[95vw] max-h-[90vh] flex items-center justify-center px-4 select-none"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
+        style={{ transform, transition, opacity, willChange: 'transform' }}
+      >
         {item.type === 'image' ? (
-          <img src={item.url!} alt="" decoding="async" fetchPriority="high" className="max-w-full max-h-[90vh] object-contain" />
+          <img
+            src={item.url!}
+            alt=""
+            decoding="async"
+            fetchPriority="high"
+            draggable={false}
+            className="max-w-full max-h-[90vh] object-contain pointer-events-none"
+          />
         ) : (
           <MediaPlayer
             url={item.url!}
@@ -115,6 +265,13 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
             className="max-h-[90vh]"
           />
         )}
+      </div>
+
+      {/* Hint overlay the first time the lightbox opens on a touch device.
+          Only rendered on narrow viewports so desktop doesn't see it. */}
+      <div className="md:hidden pointer-events-none absolute bottom-6 left-0 right-0 text-center text-white/50 text-[11px]"
+           style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        Swipe to navigate · Swipe down to close
       </div>
     </div>
   );
