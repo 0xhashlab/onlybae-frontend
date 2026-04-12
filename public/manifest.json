@@ -12,16 +12,10 @@
   "categories": ["entertainment", "social", "lifestyle"],
   "icons": [
     {
-      "src": "/logo.png",
-      "sizes": "any",
-      "type": "image/png",
+      "src": "/logo.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
       "purpose": "any"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "any",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ],
   "shortcuts": [

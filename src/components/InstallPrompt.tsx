@@ -102,7 +102,7 @@ export default function InstallPrompt() {
       style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
     >
       <div className="pointer-events-auto bg-surface border border-border rounded-2xl p-3 shadow-2xl flex items-start gap-3">
-        <img src="/logo.png" alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" />
+        <img src="/logo.jpg" alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" />
         <div className="flex-1 min-w-0">
           {mode === 'install-button' ? (
             <>
