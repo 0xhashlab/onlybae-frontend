@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGrip, faUser, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 import AgeGate from '@/components/AgeGate';
 import VersionBadge from '@/components/VersionBadge';
+import EdgeSwipeBack, { OPEN_DRAWER_EVENT } from '@/components/EdgeSwipeBack';
 
 type MenuItem = { key: string; icon: React.ReactNode; label: string; authOnly?: boolean };
 
@@ -53,6 +54,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     setDrawerOpen(false);
   }, [pathname]);
+
+  // Open the drawer when EdgeSwipeBack emits its "no history, you're at root"
+  // event. This gives the left-edge swipe a useful meaning on root pages.
+  useEffect(() => {
+    const handler = () => setDrawerOpen(true);
+    window.addEventListener(OPEN_DRAWER_EVENT, handler);
+    return () => window.removeEventListener(OPEN_DRAWER_EVENT, handler);
+  }, []);
 
   const handleNav = (path: string) => {
     router.push(path);
@@ -141,6 +150,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-background">
       <AgeGate />
+      <EdgeSwipeBack />
 
       {/* Desktop sidebar (md+) */}
       <aside className="hidden md:flex w-56 bg-surface border-r border-border flex-col fixed h-full z-30">
