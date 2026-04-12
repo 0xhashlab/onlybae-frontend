@@ -29,3 +29,20 @@ body {
 .prose-custom h2 { color: var(--color-foreground); font-size: 1.125rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; }
 .prose-custom ul { color: var(--color-secondary); font-size: 0.9375rem; line-height: 1.75; margin-bottom: 1rem; padding-left: 1.5rem; list-style-type: disc; }
 .prose-custom li { margin-bottom: 0.25rem; }
+
+/*
+  User layout main-content padding.
+  Mobile: clear the fixed top bar (3.5rem) + Dynamic Island / notch safe-area,
+          and the fixed bottom tab bar (4rem) + iOS home-indicator safe-area.
+  Desktop (md+): no top/bottom bars, fall back to p-8.
+*/
+.user-main {
+  padding-top: calc(env(safe-area-inset-top) + 4.5rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+}
+@media (min-width: 768px) {
+  .user-main {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+}

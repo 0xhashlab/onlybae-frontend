@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGrip, faUser, faWallet, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen } from '@fortawesome/free-solid-svg-icons';
+import { faGrip, faUser, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 import AgeGate from '@/components/AgeGate';
 
 type MenuItem = { key: string; icon: React.ReactNode; label: string; authOnly?: boolean };
@@ -19,17 +19,17 @@ const publicMenuItems: MenuItem[] = [
 const authMenuItems: MenuItem[] = [
   { key: '/unlocked', icon: <FontAwesomeIcon icon={faLockOpen} className="w-4 h-4" />, label: 'Unlocked', authOnly: true },
   { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />, label: 'Favorites', authOnly: true },
-  { key: '/wallet', icon: <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />, label: 'Wallet', authOnly: true },
-  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-4 h-4" />, label: 'Profile', authOnly: true },
+  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-4 h-4" />, label: 'Me', authOnly: true },
 ];
 
-// Mobile bottom tab bar — compact, high-frequency actions only.
+// Mobile bottom tab bar — top content entry points plus the user's Me page
+// (which holds wallet, transactions, and account settings).
 const mobileTabs: MenuItem[] = [
   { key: '/browse', icon: <FontAwesomeIcon icon={faGrip} className="w-5 h-5" />, label: 'Browse' },
   { key: '/reels', icon: <FontAwesomeIcon icon={faVideo} className="w-5 h-5" />, label: 'Reels' },
+  { key: '/manga', icon: <FontAwesomeIcon icon={faBookOpen} className="w-5 h-5" />, label: 'Manga' },
   { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />, label: 'Favorites', authOnly: true },
-  { key: '/wallet', icon: <FontAwesomeIcon icon={faWallet} className="w-5 h-5" />, label: 'Wallet', authOnly: true },
-  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-5 h-5" />, label: 'Profile', authOnly: true },
+  { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-5 h-5" />, label: 'Me', authOnly: true },
 ];
 
 const membershipColors: Record<string, string> = {
@@ -143,8 +143,18 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         {renderSidebarContent()}
       </aside>
 
-      {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 h-14 bg-surface/95 backdrop-blur border-b border-border flex items-center px-3 gap-3">
+      {/*
+        Mobile top bar.
+        paddingTop = env(safe-area-inset-top) pushes the content below Dynamic Island / notch.
+        height grows to 3.5rem + safe-area so the visible content area is always 3.5rem tall.
+      */}
+      <header
+        className="md:hidden fixed top-0 inset-x-0 z-30 bg-surface/95 backdrop-blur border-b border-border flex items-center px-3 gap-3"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          height: 'calc(3.5rem + env(safe-area-inset-top))',
+        }}
+      >
         <button
           aria-label="Open menu"
           onClick={() => setDrawerOpen(true)}
@@ -186,8 +196,13 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         </div>
       )}
 
-      {/* Main content */}
-      <main className="flex-1 md:ml-56 p-4 md:p-8 pt-[4.5rem] md:pt-8 pb-20 md:pb-8">
+      {/*
+        Main content. On mobile the top padding clears the header (3.5rem)
+        plus the Dynamic Island / notch safe area, and the bottom padding
+        clears the tab bar plus iOS home indicator. See .user-main rule in
+        globals.css for the exact math.
+      */}
+      <main className="user-main flex-1 md:ml-56 p-4 md:p-8">
         {children}
       </main>
 

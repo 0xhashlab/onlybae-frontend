@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { userApi } from '@/utils/api';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -12,43 +12,107 @@ const membershipStyles: Record<string, string> = {
   vip: 'bg-purple-500/10 text-purple-400',
 };
 
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  description: string;
+  createdAt: string;
+}
+
+// TODO: These are placeholder amounts - finalize pricing later
+const topUpOptions = [
+  { tokens: 50, price: '$4.99' },
+  { tokens: 100, price: '$8.99' },
+  { tokens: 250, price: '$19.99' },
+  { tokens: 500, price: '$34.99' },
+];
+
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+
+  // Editable account fields
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState(user?.name || '');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
 
-  if (!user) return <ProtectedRoute><div /></ProtectedRoute>;
+  // Wallet state
+  const [balance, setBalance] = useState<number>(user?.tokenBalance || 0);
+  const [membership, setMembership] = useState<string>(user?.membershipLevel || 'free');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [walletMessage, setWalletMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [customAmount, setCustomAmount] = useState<number>(10);
 
-  const handleSave = async () => {
+  const fetchWallet = useCallback(async () => {
+    setWalletLoading(true);
+    try {
+      const balRes = await userApi.getBalance();
+      const balData = balRes.data as { tokenBalance: number; membershipLevel: string };
+      setBalance(balData.tokenBalance);
+      setMembership(balData.membershipLevel);
+
+      const txRes = await userApi.getTransactions({ limit: 50 });
+      const txData = txRes.data as { items: Transaction[] };
+      setTransactions(txData.items || []);
+    } catch {
+      // keep existing values
+    } finally {
+      setWalletLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchWallet();
+  }, [user, fetchWallet]);
+
+  const handleSaveProfile = async () => {
     if (!name.trim()) {
-      setError('Name is required');
+      setProfileError('Name is required');
       return;
     }
     setSaving(true);
-    setError('');
-    setSuccess('');
+    setProfileError('');
+    setProfileSuccess('');
     try {
       await userApi.updateProfile({ name: name.trim() });
-      setSuccess('Profile updated successfully');
+      setProfileSuccess('Profile updated successfully');
       setEditing(false);
+      refreshUser?.();
     } catch {
-      setError('Failed to update profile');
+      setProfileError('Failed to update profile');
     } finally {
       setSaving(false);
     }
   };
 
+  const handleTopUp = async (amount: number) => {
+    setWalletMessage(null);
+    try {
+      const res = await userApi.topUp(amount);
+      const data = res.data as { newBalance: number };
+      setBalance(data.newBalance);
+      setWalletMessage({ type: 'success', text: `Top-up successful! +${amount} tokens` });
+      fetchWallet();
+      refreshUser?.();
+    } catch (err: unknown) {
+      const error = err as Error;
+      setWalletMessage({ type: 'error', text: error.message || 'Top-up failed' });
+    }
+  };
+
+  if (!user) return <ProtectedRoute><div /></ProtectedRoute>;
+
   return (
     <div>
       <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-6 md:mb-8">
-        Profile
+        Me
       </h1>
 
-      <div className="bg-surface border border-border rounded-xl max-w-xl">
-        {/* Header with avatar */}
+      {/* Account card */}
+      <div className="bg-surface border border-border rounded-xl max-w-xl mb-6">
         <div className="p-6 flex items-center gap-5 border-b border-border">
           {user.avatarUrl ? (
             <img
@@ -76,43 +140,40 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Details */}
         <div className="p-6 space-y-4">
           <div className="flex justify-between items-center py-3 border-b border-border/50">
             <span className="text-sm text-muted">Membership</span>
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${membershipStyles[user.membershipLevel] || membershipStyles.free}`}>
-              {user.membershipLevel.toUpperCase()}
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${membershipStyles[membership] || membershipStyles.free}`}>
+              {membership.toUpperCase()}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 border-b border-border/50">
             <span className="text-sm text-muted">Token Balance</span>
-            <span className="text-sm font-medium text-foreground">{user.tokenBalance} tokens</span>
+            <span className="text-sm font-medium text-foreground">{balance} tokens</span>
           </div>
 
-          {/* Messages */}
-          {error && (
+          {profileError && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
-              <p className="text-red-400 text-sm">{error}</p>
+              <p className="text-red-400 text-sm">{profileError}</p>
             </div>
           )}
-          {success && (
+          {profileSuccess && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-2">
-              <p className="text-emerald-400 text-sm">{success}</p>
+              <p className="text-emerald-400 text-sm">{profileSuccess}</p>
             </div>
           )}
 
-          {/* Actions */}
           {editing ? (
             <div className="flex gap-3 pt-2">
               <button
-                onClick={handleSave}
+                onClick={handleSaveProfile}
                 disabled={saving}
                 className="h-10 px-5 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
               <button
-                onClick={() => { setEditing(false); setName(user.name); setError(''); }}
+                onClick={() => { setEditing(false); setName(user.name); setProfileError(''); }}
                 className="h-10 px-5 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground text-sm font-medium transition-colors cursor-pointer"
               >
                 Cancel
@@ -121,7 +182,7 @@ export default function ProfilePage() {
           ) : (
             <div className="pt-2">
               <button
-                onClick={() => { setEditing(true); setSuccess(''); }}
+                onClick={() => { setEditing(true); setProfileSuccess(''); }}
                 className="h-10 px-5 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors cursor-pointer"
               >
                 Edit Profile
@@ -130,6 +191,107 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Wallet section */}
+      <h2 className="text-lg md:text-xl font-semibold text-foreground tracking-tight mb-4">Wallet</h2>
+
+      {walletLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
+          {walletMessage && (
+            <div className={`mb-4 rounded-lg px-4 py-3 border ${
+              walletMessage.type === 'success'
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                : 'bg-red-500/10 border-red-500/20 text-red-400'
+            }`}>
+              <p className="text-sm">{walletMessage.text}</p>
+            </div>
+          )}
+
+          {/* Top Up */}
+          <div className="bg-surface border border-border rounded-xl p-4 md:p-6 mb-6">
+            <h3 className="text-base font-semibold text-foreground mb-4">Top Up Tokens</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {topUpOptions.map((opt) => (
+                <button
+                  key={opt.tokens}
+                  onClick={() => handleTopUp(opt.tokens)}
+                  className="flex flex-col items-center gap-1 p-3 md:p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                >
+                  <span className="text-xl md:text-2xl font-semibold text-foreground group-hover:text-accent transition-colors">{opt.tokens}</span>
+                  <span className="text-xs text-muted">tokens</span>
+                  <span className="text-sm font-medium text-foreground mt-1">{opt.price}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-border">
+              <span className="text-sm text-muted">Custom:</span>
+              <input
+                type="number"
+                min={1}
+                value={customAmount}
+                onChange={(e) => setCustomAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-24 h-10 px-3 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              />
+              <button
+                onClick={() => handleTopUp(customAmount)}
+                className="h-10 px-5 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors cursor-pointer"
+              >
+                Top Up
+              </button>
+            </div>
+          </div>
+
+          {/* Transaction History */}
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="px-4 md:px-6 py-4 border-b border-border">
+              <h3 className="text-base font-semibold text-foreground">Transaction History</h3>
+            </div>
+            {transactions.length === 0 ? (
+              <div className="px-6 py-12 text-center text-muted text-sm">No transactions yet</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-background">
+                      <th className="text-left px-4 md:px-6 py-3 text-muted text-xs uppercase tracking-wider font-medium">Type</th>
+                      <th className="text-left px-4 md:px-6 py-3 text-muted text-xs uppercase tracking-wider font-medium">Amount</th>
+                      <th className="text-left px-4 md:px-6 py-3 text-muted text-xs uppercase tracking-wider font-medium">Description</th>
+                      <th className="text-left px-4 md:px-6 py-3 text-muted text-xs uppercase tracking-wider font-medium hidden sm:table-cell">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="border-b border-border/50 hover:bg-surface-hover transition-colors">
+                        <td className="px-4 md:px-6 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            tx.type === 'topup'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : 'bg-red-500/10 text-red-400'
+                          }`}>
+                            {tx.type === 'topup' ? 'Top-up' : 'Spend'}
+                          </span>
+                        </td>
+                        <td className="px-4 md:px-6 py-3">
+                          <span className={tx.amount > 0 ? 'text-emerald-400 font-medium' : 'text-red-500 font-medium'}>
+                            {tx.amount > 0 ? `+${tx.amount}` : tx.amount}
+                          </span>
+                        </td>
+                        <td className="px-4 md:px-6 py-3 text-muted">{tx.description}</td>
+                        <td className="px-4 md:px-6 py-3 text-muted hidden sm:table-cell">{new Date(tx.createdAt).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
