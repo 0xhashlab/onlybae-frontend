@@ -180,18 +180,27 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         )}
       </header>
 
-      {/* Mobile drawer (slide-in from left) */}
+      {/* Mobile drawer (slide-in from left).
+          Pad by safe-area-inset-top/bottom so the Dynamic Island and home
+          indicator do not overlap the logo row or the legal links. */}
       {drawerOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside className="relative w-64 bg-surface border-r border-border flex flex-col h-full">
+          <aside
+            className="relative w-64 bg-surface border-r border-border flex flex-col h-full"
+            style={{
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
             <button
               aria-label="Close menu"
               onClick={() => setDrawerOpen(false)}
-              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-hover text-foreground cursor-pointer"
+              className="absolute right-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-hover text-foreground cursor-pointer z-10"
+              style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
             >
               <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
             </button>
