@@ -8,6 +8,7 @@ import { faGrip, faUser, faBook, faHeart, faLockOpen, faRightFromBracket, faRigh
 import AgeGate from '@/components/AgeGate';
 import VersionBadge from '@/components/VersionBadge';
 import EdgeSwipeBack, { OPEN_DRAWER_EVENT } from '@/components/EdgeSwipeBack';
+import AddToHomeScreenButton from '@/components/AddToHomeScreenButton';
 
 type MenuItem = { key: string; icon: React.ReactNode; label: string; authOnly?: boolean };
 
@@ -107,6 +108,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       </nav>
 
       <div className="border-t border-border py-2">
+        {/* Install button is above auth actions so logged-out users see it too.
+            Auto-hides when the app is already running in standalone mode. */}
+        <AddToHomeScreenButton compact />
         {isAuthenticated ? (
           <button
             onClick={() => { logout(); router.push('/login'); }}

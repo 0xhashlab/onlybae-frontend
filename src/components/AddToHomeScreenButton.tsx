@@ -5,18 +5,22 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreenButton, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 
-// Explicit "Install app" button for the Profile page.
+// Explicit "Install app" button.
 // Behavior:
-//   - App already installed: renders a small "Installed" badge.
+//   - App already installed: renders a small "Installed" badge (or null in compact mode).
 //   - Chrome / Edge / Android (canPromptInstall): fires the native prompt.
 //   - iOS Safari: opens a modal with the Share → Add to Home Screen steps.
 //   - Unsupported browsers (Firefox desktop, etc): opens the same modal with generic copy.
-export default function AddToHomeScreenButton() {
+//
+// `compact` renders as a full-width sidebar row instead of the big Profile-page button,
+// so the same component can live in the sidebar footer for logged-out users too.
+export default function AddToHomeScreenButton({ compact = false }: { compact?: boolean }) {
   const { installed, canPromptInstall, needsIosInstructions, promptInstall } = usePwaInstall();
   const [showIosModal, setShowIosModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (installed) {
+    if (compact) return null;
     return (
       <div className="inline-flex items-center gap-2 text-sm text-emerald-400">
         <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
@@ -45,15 +49,26 @@ export default function AddToHomeScreenButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={handleClick}
-        className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer"
-      >
-        <FontAwesomeIcon icon={faMobileScreenButton} className="w-3.5 h-3.5" />
-        Add to Home Screen
-      </button>
-      {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
+      {compact ? (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-accent hover:bg-surface-hover transition-colors duration-150 cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faMobileScreenButton} className="w-4 h-4" />
+          Add to Home Screen
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer"
+        >
+          <FontAwesomeIcon icon={faMobileScreenButton} className="w-3.5 h-3.5" />
+          Add to Home Screen
+        </button>
+      )}
+      {error && !compact && <p className="text-xs text-red-400 mt-2">{error}</p>}
 
       {showIosModal && (
         <InstallInstructionsModal
