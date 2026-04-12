@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGrip, faUser, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 import AgeGate from '@/components/AgeGate';
+import VersionBadge from '@/components/VersionBadge';
 
 type MenuItem = { key: string; icon: React.ReactNode; label: string; authOnly?: boolean };
 
@@ -122,6 +123,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         <a href="/content-removal" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">Content Removal</a>
         <a href="/underage-policy" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">18+</a>
         <a href="/complaints" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground text-[11px] transition-colors">Complaints</a>
+      </div>
+      <div className="px-4 pb-3">
+        <VersionBadge />
       </div>
     </>
   );
