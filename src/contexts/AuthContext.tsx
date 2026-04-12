@@ -208,6 +208,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Refresh CDN signed cookies periodically. The server issues them with a
+  // 60-minute Max-Age, so long-lived PWA sessions would otherwise start 403-ing
+  // on images and videos. Refresh every 40 minutes and whenever the tab
+  // regains focus, for users who backgrounded the app for hours.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = getToken();
+    if (!token) return;
+
+    const REFRESH_INTERVAL_MS = 40 * 60 * 1000;
+    const interval = window.setInterval(() => fetchCdnCookies(token), REFRESH_INTERVAL_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') fetchCdnCookies(token);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [isAuthenticated]);
+
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, loginWithGoogle, getToken, refreshUser }}>
       {children}

@@ -38,7 +38,7 @@ function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
   const renderItem = (p: PreviewItem, height: string, iconSize: string) => (
     <div className={`${height} bg-surface-hover relative overflow-hidden`}>
       {p.url ? (
-        <img src={p.url} alt="" className="w-full h-full object-cover" />
+        <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full bg-surface-hover" />
       )}

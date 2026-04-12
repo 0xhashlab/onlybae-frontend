@@ -75,7 +75,7 @@ export default function MangaDetail() {
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-8">
         <div className="w-40 md:w-52 aspect-[2/3] rounded-lg overflow-hidden bg-surface-hover border border-border shrink-0 mx-auto md:mx-0">
           {series.coverUrl ? (
-            <img src={series.coverUrl} alt={series.title} className="w-full h-full object-cover" />
+            <img src={series.coverUrl} alt={series.title} decoding="async" fetchPriority="high" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <FontAwesomeIcon icon={faBookOpen} className="w-10 h-10 text-muted" />
@@ -115,6 +115,8 @@ export default function MangaDetail() {
                     <img
                       src={ch.coverUrl || ch.previews?.[0]?.url || ''}
                       alt=""
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   ) : (

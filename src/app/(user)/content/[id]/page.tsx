@@ -104,7 +104,7 @@ function Lightbox({ items, index, onClose, onPrev, onNext }: {
       {/* Content */}
       <div className="max-w-[95vw] max-h-[90vh] flex items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
         {item.type === 'image' ? (
-          <img src={item.url!} alt="" className="max-w-full max-h-[90vh] object-contain" />
+          <img src={item.url!} alt="" decoding="async" fetchPriority="high" className="max-w-full max-h-[90vh] object-contain" />
         ) : (
           <MediaPlayer
             url={item.url!}
@@ -318,7 +318,7 @@ export default function ContentDetailPage() {
             const heroLocked = !content.coverUrl && items[0]?.locked;
             return (
               <div className="w-full md:w-80 h-56 md:h-64 bg-surface-hover relative overflow-hidden flex-shrink-0">
-                <img src={heroUrl} alt={content.title} className="w-full h-full object-cover" />
+                <img src={heroUrl} alt={content.title} decoding="async" fetchPriority="high" className="w-full h-full object-cover" />
                 {heroLocked && (
                   <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
                     <svg className="w-8 h-8 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
@@ -457,7 +457,7 @@ export default function ContentDetailPage() {
             {item.locked ? (
               <>
                 {item.url ? (
-                  <img src={item.url} alt="" className="w-full h-full object-cover" />
+                  <img src={item.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-surface-hover" />
                 )}
@@ -468,7 +468,7 @@ export default function ContentDetailPage() {
             ) : (
               item.type === 'image' ? (
                 <>
-                  <img src={item.url!} alt="" className="w-full h-full object-cover" />
+                  <img src={item.url!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                     <svg className="w-6 h-6 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />

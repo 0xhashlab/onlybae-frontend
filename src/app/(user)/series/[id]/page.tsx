@@ -28,7 +28,7 @@ export default function SeriesDetail() {
 
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-8">
         {series.coverUrl ? (
-          <img src={series.coverUrl} alt={series.title} className="w-full md:w-48 h-56 md:h-64 rounded-xl object-cover shrink-0" />
+          <img src={series.coverUrl} alt={series.title} decoding="async" fetchPriority="high" className="w-full md:w-48 h-56 md:h-64 rounded-xl object-cover shrink-0" />
         ) : (
           <div className="w-full md:w-48 h-56 md:h-64 rounded-xl bg-surface-hover flex items-center justify-center shrink-0">
             <svg className="w-16 h-16 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
@@ -57,7 +57,7 @@ export default function SeriesDetail() {
           >
             <div className="w-20 h-14 rounded-lg bg-surface-hover overflow-hidden shrink-0 flex items-center justify-center">
               {(c.coverUrl || c.previews?.[0]?.url) ? (
-                <img src={c.coverUrl || c.previews[0].url} alt="" className="w-full h-full object-cover" />
+                <img src={c.coverUrl || c.previews[0].url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               ) : (
                 <svg className="w-6 h-6 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909" /></svg>
               )}
