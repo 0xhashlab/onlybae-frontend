@@ -58,8 +58,7 @@ function ReelsPageInner() {
         <button
           onClick={() => router.push('/reels/browse')}
           aria-label="Back to all reels"
-          className="absolute z-20 flex items-center justify-center md:gap-2 w-10 h-10 md:w-auto md:h-9 md:pl-2 md:pr-3 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
-          style={{ top: 'calc(1rem + env(safe-area-inset-top))', left: '1rem' }}
+          className="absolute z-20 top-3 left-3 flex items-center justify-center md:gap-2 w-10 h-10 md:w-auto md:h-9 md:pl-2 md:pr-3 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Back</span>
@@ -73,8 +72,7 @@ function ReelsPageInner() {
         onClick={() => setChromeVisible((v) => !v)}
         aria-label={chromeVisible ? 'Hide UI' : 'Show UI'}
         title={chromeVisible ? 'Hide UI' : 'Show UI'}
-        className="absolute z-30 flex items-center justify-center md:gap-2 w-10 h-10 md:w-auto md:h-9 md:pl-3 md:pr-4 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
-        style={{ top: 'calc(1rem + env(safe-area-inset-top))', right: '1rem' }}
+        className="absolute z-30 top-3 right-3 flex items-center justify-center md:gap-2 w-10 h-10 md:w-auto md:h-9 md:pl-3 md:pr-4 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
       >
         <FontAwesomeIcon icon={chromeVisible ? faEyeSlash : faEye} className="w-4 h-4" />
         <span className="hidden md:inline">{chromeVisible ? 'Hide UI' : 'Show UI'}</span>

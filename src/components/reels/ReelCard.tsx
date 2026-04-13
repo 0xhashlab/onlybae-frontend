@@ -251,7 +251,7 @@ export default function ReelCard({
       {/* Right-side actions. Mute lives at the top of this column now so it
           doesn't collide with the top-right Hide UI pill and the For You /
           Browse All tab bar. */}
-      <div className={`absolute right-3 z-10 flex flex-col items-center gap-3 ${chromeClass}`} style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+      <div className={`absolute right-3 bottom-16 z-10 flex flex-col items-center gap-3 ${chromeClass}`}>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
           aria-label={muted ? 'Unmute' : 'Mute'}
@@ -307,11 +307,7 @@ export default function ReelCard({
       {/* Bottom gradient scrim — darkens just the bottom strip so white text
           stays legible without covering most of the frame. */}
       <div
-        className={`absolute left-0 right-0 z-[8] pointer-events-none bg-gradient-to-t from-black/70 via-black/20 to-transparent ${chromeClass}`}
-        style={{
-          bottom: 0,
-          height: 'calc(7rem + env(safe-area-inset-bottom))',
-        }}
+        className={`absolute left-0 right-0 bottom-0 h-28 z-[8] pointer-events-none bg-gradient-to-t from-black/70 via-black/20 to-transparent ${chromeClass}`}
       />
 
       {/* Bottom info — compact so it covers as little of the video as
@@ -319,8 +315,7 @@ export default function ReelCard({
           desktop where space is plentiful. Series link stays (it's the
           pathway back to a show). */}
       <div
-        className={`absolute left-3 right-20 z-10 text-white drop-shadow pointer-events-none ${chromeClass}`}
-        style={{ bottom: 'calc(1.75rem + env(safe-area-inset-bottom))' }}
+        className={`absolute left-3 right-20 bottom-7 z-10 text-white drop-shadow pointer-events-none ${chromeClass}`}
       >
         <div className="text-sm font-semibold truncate">@{item.creator.name}</div>
         <div className="text-sm font-medium line-clamp-1 mt-0.5">{item.title}</div>
@@ -345,8 +340,7 @@ export default function ReelCard({
           home indicator safe area). Thin, unobtrusive, full-width. */}
       {active && shouldMountVideo && item.video?.url && !locked && (
         <div
-          className={`absolute left-0 right-0 z-10 h-0.5 bg-white/15 ${chromeClass}`}
-          style={{ bottom: 'calc(0.25rem + env(safe-area-inset-bottom))' }}
+          className={`absolute left-0 right-0 bottom-1 z-10 h-0.5 bg-white/15 ${chromeClass}`}
         >
           <div
             className="h-full bg-white/90"

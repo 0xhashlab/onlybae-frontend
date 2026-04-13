@@ -43,19 +43,16 @@ export default function ReelsTabs({
 
   const indicatorClass = variant === 'overlay' ? 'bg-white' : 'bg-foreground';
 
-  // Overlay variant floats over the fixed /reels shell (top-safe-area aware).
-  // Solid variant lives in a standard flow position at the top of the page.
+  // Overlay variant floats inside the fixed /reels shell. The shell itself
+  // already inset its top by safe-area-inset-top, so don't add it again here
+  // — that would double-count the Dynamic Island and push tabs way down.
   const containerClass =
     variant === 'overlay'
-      ? 'absolute z-30 left-1/2 -translate-x-1/2 flex items-center gap-6 px-2'
+      ? 'absolute z-30 left-1/2 -translate-x-1/2 flex items-center gap-6 px-2 top-4 md:top-3'
       : 'flex items-center justify-center gap-6 px-2 mb-4';
-  const containerStyle =
-    variant === 'overlay'
-      ? { top: 'calc(0.75rem + env(safe-area-inset-top))' }
-      : undefined;
 
   return (
-    <div className={containerClass} style={containerStyle}>
+    <div className={containerClass}>
       <TabButton
         active={activeKey === 'foryou'}
         onClick={() => goto('foryou')}

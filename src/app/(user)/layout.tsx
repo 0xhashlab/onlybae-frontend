@@ -224,12 +224,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       )}
 
       {/*
-        Main content. On mobile the top padding clears the header (3.5rem)
-        plus the Dynamic Island / notch safe area, and the bottom padding
-        clears the tab bar plus iOS home indicator. See .user-main rule in
-        globals.css for the exact math.
+        Main content. On mobile the top padding clears the fixed header
+        (3.5rem) plus the Dynamic Island / notch safe area, and the bottom
+        padding clears the tab bar (4rem) plus iOS home indicator.
       */}
-      <main className="user-main flex-1 md:ml-56 p-4 md:p-8">
+      <main className="user-main flex-1 md:ml-56 px-4 md:p-8">
         {children}
       </main>
 
