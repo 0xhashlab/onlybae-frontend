@@ -181,15 +181,13 @@ export default function ReelCard({
         />
       )}
 
-      {/* Main media.
+      {/* Main media. Absolutely positioned to fill the card so flex centering
+          can't misalign it.
           Fill strategy:
-            - Landscape videos on any viewport: object-contain with letterbox bars
-              (keep the frame intact, center it, show blurred background around).
-            - Portrait / square videos on mobile (<md): fill the viewport width
-              with object-cover so there are no side bars — vertical overflow
-              gets cropped from top and bottom, matching TikTok.
-            - Portrait / square videos on desktop (md+): object-contain centered
-              with max-width cap, since the reels column is already narrow.
+            - Portrait / square video: object-cover so it fills edge-to-edge
+              like TikTok. Overflow on the long axis is center-cropped.
+            - Landscape video: object-contain so the frame stays intact with
+              letterbox bars over the blurred background poster.
       */}
       {shouldMountVideo && item.video?.url ? (
         <video
@@ -200,16 +198,7 @@ export default function ReelCard({
           playsInline
           muted={muted}
           preload={preload}
-          className={
-            isLandscape
-              ? 'relative z-0 w-full max-h-full object-contain'
-              : 'relative z-0 w-full h-full object-cover md:w-auto md:h-full md:max-w-full md:object-contain'
-          }
-          style={
-            isLandscape
-              ? { aspectRatio: `${videoW} / ${videoH}` }
-              : undefined
-          }
+          className={`absolute inset-0 w-full h-full z-0 ${isLandscape ? 'object-contain' : 'object-cover'}`}
           onTimeUpdate={(e) => {
             const v = e.currentTarget;
             if (v.duration > 0) setProgress(v.currentTime / v.duration);
@@ -223,11 +212,7 @@ export default function ReelCard({
         <img
           src={item.coverUrl}
           alt={item.title}
-          className={
-            isLandscape
-              ? 'relative z-0 w-full max-h-full object-contain select-none'
-              : 'relative z-0 w-full h-full object-cover md:w-auto md:h-full md:max-w-full md:object-contain select-none'
-          }
+          className={`absolute inset-0 w-full h-full z-0 select-none ${isLandscape ? 'object-contain' : 'object-cover'}`}
           draggable={false}
         />
       ) : (
