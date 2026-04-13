@@ -76,36 +76,49 @@ export default function ReelsSeriesDetail() {
         All Reels
       </button>
 
-      {/* Hero */}
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-6 md:mb-8">
-        <div className="w-40 md:w-52 aspect-[9/16] rounded-lg overflow-hidden bg-surface-hover border border-border shrink-0 mx-auto md:mx-0 relative">
+      {/*
+        Mobile: centered hero — cover on top, then title / badge / creator /
+        description / episode count, then a wide "Play from Ep 1" button.
+        Desktop: keeps the side-by-side layout so wider screens feel filled.
+      */}
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-8 mb-8 md:mb-10">
+        {/* Cover — larger and centered on mobile to feel like a real show poster. */}
+        <div className="w-56 md:w-60 aspect-[9/16] rounded-xl overflow-hidden bg-surface-hover border border-border shrink-0 shadow-xl shadow-black/40">
           {series.coverUrl ? (
-            <img src={series.coverUrl} alt={series.title} decoding="async" fetchPriority="high" className="w-full h-full object-cover" />
+            <img
+              src={series.coverUrl}
+              alt={series.title}
+              decoding="async"
+              fetchPriority="high"
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <FontAwesomeIcon icon={faVideo} className="w-10 h-10 text-muted" />
             </div>
           )}
         </div>
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-center gap-2 flex-wrap">
+
+        {/* Info block. Centered text on mobile; left-aligned on desktop so it
+            reads across from the cover naturally. */}
+        <div className="flex-1 min-w-0 w-full flex flex-col items-center md:items-start text-center md:text-left">
+          <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
             <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">{series.title}</h1>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-semibold tracking-wide">REELS</span>
           </div>
-          {series.creator && (
-            <p className="text-sm text-muted mt-1">by {series.creator.name}</p>
-          )}
+          <p className="text-xs text-muted mt-1">
+            {series.creator ? `by ${series.creator.name} · ` : ''}{episodes.length} episode{episodes.length === 1 ? '' : 's'}
+          </p>
           {series.description && (
-            <p className="text-sm text-secondary mt-3 whitespace-pre-line">{series.description}</p>
+            <p className="text-sm text-secondary mt-4 max-w-md whitespace-pre-line leading-relaxed">{series.description}</p>
           )}
-          <p className="text-sm text-muted mt-2">{episodes.length} episodes</p>
 
           {firstEp && (
             <button
               onClick={playFromStart}
-              className="mt-auto md:mt-6 w-full md:w-auto self-start h-11 px-6 rounded-full bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent-hover transition-colors flex items-center justify-center gap-2"
+              className="mt-6 w-full md:w-auto max-w-sm h-12 px-8 rounded-full bg-accent text-white font-semibold text-sm cursor-pointer hover:bg-accent-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             >
-              <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+              <FontAwesomeIcon icon={faPlay} className="w-3.5 h-3.5" />
               Play from Ep {firstEp.orderInSeries ?? 1}
             </button>
           )}
@@ -113,7 +126,7 @@ export default function ReelsSeriesDetail() {
       </div>
 
       {/* Episodes list */}
-      <h2 className="text-lg font-medium text-foreground mb-4">Episodes</h2>
+      <h2 className="text-lg font-semibold text-foreground mb-3">Episodes</h2>
       {episodes.length === 0 ? (
         <p className="text-sm text-muted py-8 text-center">No episodes yet.</p>
       ) : (
@@ -124,9 +137,10 @@ export default function ReelsSeriesDetail() {
               <div
                 key={ep.id}
                 onClick={() => router.push(`/reels?seriesId=${id}&start=${ep.id}`)}
-                className="bg-surface border border-border rounded-lg p-3 md:p-4 flex items-center gap-3 md:gap-4 cursor-pointer hover:border-accent/50 transition-colors group"
+                className="bg-surface border border-border rounded-xl p-2.5 md:p-3 flex items-center gap-3 md:gap-4 cursor-pointer hover:border-accent/50 transition-colors group"
               >
-                <div className="w-20 h-28 rounded bg-surface-hover overflow-hidden shrink-0">
+                {/* 9:16 thumb matches the reels aspect so list and feed feel unified. */}
+                <div className="w-[72px] aspect-[9/16] rounded-lg bg-surface-hover overflow-hidden shrink-0">
                   {(ep.coverUrl || ep.previews?.[0]?.url) ? (
                     <img
                       src={ep.coverUrl || ep.previews?.[0]?.url || ''}
@@ -144,7 +158,7 @@ export default function ReelsSeriesDetail() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     {ep.orderInSeries && (
-                      <span className="text-xs text-accent font-medium">Ep {ep.orderInSeries}</span>
+                      <span className="text-xs text-accent font-semibold">Ep {ep.orderInSeries}</span>
                     )}
                     <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">
                       {ep.title}
@@ -156,9 +170,9 @@ export default function ReelsSeriesDetail() {
                   </div>
                 </div>
                 {canWatch ? (
-                  <FontAwesomeIcon icon={faPlay} className="w-3 h-3 text-accent shrink-0" />
+                  <FontAwesomeIcon icon={faPlay} className="w-4 h-4 text-accent shrink-0 mr-1" />
                 ) : (
-                  <FontAwesomeIcon icon={faLock} className="w-4 h-4 text-muted shrink-0" />
+                  <FontAwesomeIcon icon={faLock} className="w-4 h-4 text-muted shrink-0 mr-1" />
                 )}
               </div>
             );
