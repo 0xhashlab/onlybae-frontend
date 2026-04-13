@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faBookmark, faLock, faVolumeHigh, faVolumeXmark, faComment, faUser, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faBookmark, faLock, faVolumeHigh, faVolumeXmark, faComment, faUser, faPlay, faListUl } from '@fortawesome/free-solid-svg-icons';
 import type { ReelItem } from '@/utils/api';
 import { userApi } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,7 @@ interface ReelCardProps {
   onChange: (updated: ReelItem) => void;
   onVideoError?: () => void;
   onOpenComments: (id: string) => void;
+  onOpenEpisodes: (seriesId: string, currentEpisodeId: string) => void;
 }
 
 // Distance within which we actually mount the <video> element.
@@ -42,6 +43,7 @@ export default function ReelCard({
   onChange,
   onVideoError,
   onOpenComments,
+  onOpenEpisodes,
 }: ReelCardProps) {
   const router = useRouter();
   const { isAuthenticated, refreshUser } = useAuth();
@@ -340,6 +342,16 @@ export default function ReelCard({
           <FontAwesomeIcon icon={faComment} className="w-6 h-6 text-white drop-shadow" />
           <span className="text-white text-xs font-medium drop-shadow">{item.commentCount}</span>
         </button>
+        {item.series && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenEpisodes(item.series!.id, item.id); }}
+            aria-label="Episodes"
+            className="flex flex-col items-center gap-1 cursor-pointer"
+          >
+            <FontAwesomeIcon icon={faListUl} className="w-6 h-6 text-white drop-shadow" />
+            <span className="text-white text-xs font-medium drop-shadow">Episodes</span>
+          </button>
+        )}
       </div>
 
       {/* Bottom gradient scrim — darkens just the bottom strip so white text

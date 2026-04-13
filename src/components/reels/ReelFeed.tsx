@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import ReelCard from './ReelCard';
 import CommentsDrawer from './CommentsDrawer';
+import EpisodesDrawer from './EpisodesDrawer';
 import { userApi, type ReelItem } from '@/utils/api';
 
 const PAGE_SIZE = 6;
@@ -33,6 +34,8 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
   const [userPausedIndex, setUserPausedIndex] = useState<number | null>(null);
   // Content id currently shown in the comments drawer (null = closed).
   const [commentsForId, setCommentsForId] = useState<string | null>(null);
+  // Episodes drawer: { seriesId, currentEpisodeId } or null = closed.
+  const [episodesDrawer, setEpisodesDrawer] = useState<{ seriesId: string; currentEpisodeId: string } | null>(null);
   const dataLoadedAtRef = useRef<number>(Date.now());
   const refetchingRef = useRef(false);
 
@@ -262,16 +265,33 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
     setItems(prev => prev.map(it => it.id === commentsForId ? { ...it, commentCount: it.commentCount + 1 } : it));
   }, [commentsForId]);
 
-  // Pause the active card whenever the comments drawer is open.
-  // We reuse userPausedIndex so the existing play/pause plumbing handles it.
+  // Pause the active card whenever the comments or episodes drawer is open.
   useEffect(() => {
-    if (commentsForId !== null) {
+    if (commentsForId !== null || episodesDrawer !== null) {
       setUserPausedIndex(activeIndex);
     } else {
-      // Only clear if we were the one that set it.
       setUserPausedIndex(prev => prev === activeIndex ? null : prev);
     }
-  }, [commentsForId, activeIndex]);
+  }, [commentsForId, episodesDrawer, activeIndex]);
+
+  const handleOpenEpisodes = useCallback((seriesId: string, currentEpisodeId: string) => {
+    setEpisodesDrawer({ seriesId, currentEpisodeId });
+  }, []);
+
+  const handleCloseEpisodes = useCallback(() => {
+    setEpisodesDrawer(null);
+  }, []);
+
+  // When user selects an episode from the drawer, scroll to it if loaded;
+  // otherwise navigate to the series feed starting from that episode.
+  const handleSelectEpisode = useCallback((episodeId: string) => {
+    const idx = items.findIndex(it => it.id === episodeId);
+    if (idx >= 0) {
+      scrollToIndex(idx);
+    } else if (episodesDrawer) {
+      window.location.href = `/reels?seriesId=${episodesDrawer.seriesId}&start=${episodeId}`;
+    }
+  }, [items, scrollToIndex, episodesDrawer]);
 
   const handleVideoError = useCallback(() => {
     // Likely signed URL expiry. Force refetch.
@@ -348,6 +368,7 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
             onChange={updateItem}
             onVideoError={handleVideoError}
             onOpenComments={handleOpenComments}
+            onOpenEpisodes={handleOpenEpisodes}
           />
         </div>
       ))}
@@ -361,6 +382,13 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
         contentId={commentsForId}
         onClose={handleCloseComments}
         onCommentAdded={handleCommentAdded}
+      />
+
+      <EpisodesDrawer
+        seriesId={episodesDrawer?.seriesId ?? null}
+        currentEpisodeId={episodesDrawer?.currentEpisodeId ?? null}
+        onClose={handleCloseEpisodes}
+        onSelectEpisode={handleSelectEpisode}
       />
     </div>
   );
