@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { userApi } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -94,7 +95,7 @@ export default function CommentsDrawer({ contentId, onClose, onCommentAdded }: C
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end md:items-center md:justify-center" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
@@ -185,6 +186,7 @@ export default function CommentsDrawer({ contentId, onClose, onCommentAdded }: C
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

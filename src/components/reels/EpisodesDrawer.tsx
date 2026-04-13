@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { userApi } from '@/utils/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faLock } from '@fortawesome/free-solid-svg-icons';
@@ -85,7 +86,7 @@ export default function EpisodesDrawer({
   const episodes = (series?.contents || [])
     .sort((a, b) => (a.orderInSeries ?? 0) - (b.orderInSeries ?? 0));
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end md:items-center md:justify-center" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
@@ -165,6 +166,7 @@ export default function EpisodesDrawer({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
