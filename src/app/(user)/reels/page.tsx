@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ReelFeed from '@/components/reels/ReelFeed';
+import ReelsTabs from '@/components/reels/ReelsTabs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
@@ -45,6 +46,11 @@ function ReelsPageInner() {
 
       <ReelFeed seriesId={seriesId} startEpisodeId={startEpisodeId} chromeVisible={chromeVisible} />
 
+      {/* Top-center For You / Browse All tabs. In scoped mode a specific
+          series is playing, so tabs are irrelevant; the Back pill replaces
+          them. Also hidden in UI-off mode. */}
+      {!inSeriesMode && chromeVisible && <ReelsTabs variant="overlay" />}
+
       {/* Scoped-mode back control, top-left with text. Only when a specific
           series is being played. Hidden when the viewer is in UI-off mode. */}
       {inSeriesMode && chromeVisible && (
@@ -70,22 +76,6 @@ function ReelsPageInner() {
         <FontAwesomeIcon icon={chromeVisible ? faEyeSlash : faEye} className="w-4 h-4" />
         {chromeVisible ? 'Hide UI' : 'Show UI'}
       </button>
-
-      {/* Bottom-centered "Browse all reels" pill — always-visible way to go
-          from the infinite feed into the grid of all reels series. Hidden
-          in scoped mode (the Back button replaces it) and when UI is off. */}
-      {!inSeriesMode && chromeVisible && (
-        <button
-          onClick={() => router.push('/reels/browse')}
-          className="absolute z-20 left-1/2 -translate-x-1/2 flex items-center gap-2 h-9 pl-3 pr-4 rounded-full bg-black/60 backdrop-blur text-white text-sm font-medium cursor-pointer whitespace-nowrap"
-          style={{ bottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-          Browse all reels
-        </button>
-      )}
     </div>
   );
 }

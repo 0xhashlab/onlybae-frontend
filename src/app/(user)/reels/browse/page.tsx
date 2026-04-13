@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { userApi } from '@/utils/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faVideo, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faVideo } from '@fortawesome/free-solid-svg-icons';
+import ReelsTabs from '@/components/reels/ReelsTabs';
 
 interface ReelsSeries {
   id: string;
@@ -68,19 +69,8 @@ export default function ReelsBrowsePage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
-        <button
-          onClick={() => router.push('/reels')}
-          aria-label="Back to feed"
-          className="w-9 h-9 rounded-lg hover:bg-surface-hover text-foreground flex items-center justify-center cursor-pointer"
-        >
-          <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
-        </button>
-        <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">All Reels</h1>
-      </div>
-      <p className="text-sm text-muted mb-6 md:mb-8">
-        Browse every reels series on OnlyBae. Pick one to watch from the start.
-      </p>
+      {/* Top-center pill tabs, same control as the overlay on the feed. */}
+      <ReelsTabs variant="solid" />
 
       {loading ? (
         <div className="flex justify-center py-20">
