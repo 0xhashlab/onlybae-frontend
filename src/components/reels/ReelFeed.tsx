@@ -15,9 +15,11 @@ interface ReelFeedProps {
   seriesId?: string;
   /** When set, auto-scroll to the episode with this content id on initial load. */
   startEpisodeId?: string;
+  /** When false, every overlay on each card (buttons, info, progress) fades out. */
+  chromeVisible?: boolean;
 }
 
-export default function ReelFeed({ seriesId, startEpisodeId }: ReelFeedProps = {}) {
+export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = true }: ReelFeedProps = {}) {
   const [items, setItems] = useState<ReelItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -335,6 +337,7 @@ export default function ReelFeed({ seriesId, startEpisodeId }: ReelFeedProps = {
             distance={Math.abs(idx - activeIndex)}
             muted={muted}
             userPaused={userPausedIndex === idx}
+            chromeVisible={chromeVisible}
             onToggleMute={toggleMute}
             onTogglePause={togglePauseActive}
             onChange={updateItem}

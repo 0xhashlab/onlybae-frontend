@@ -16,6 +16,8 @@ interface ReelCardProps {
   distance: number;
   muted: boolean;
   userPaused: boolean;
+  /** When false, all overlay chrome (buttons, info, progress bar, mute) fades out. */
+  chromeVisible: boolean;
   onToggleMute: () => void;
   onTogglePause: () => void;
   onChange: (updated: ReelItem) => void;
@@ -34,6 +36,7 @@ export default function ReelCard({
   distance,
   muted,
   userPaused,
+  chromeVisible,
   onToggleMute,
   onTogglePause,
   onChange,
@@ -132,10 +135,8 @@ export default function ReelCard({
   // Single tap → pause/play. Double tap → like with burst animation.
   const handleSurfaceTap = () => {
     if (tapTimerRef.current !== null) {
-      // This is a double tap.
       window.clearTimeout(tapTimerRef.current);
       tapTimerRef.current = null;
-      // Only trigger like if not already liked (or flip it either way? Instagram doesn't unlike on double tap)
       if (!item.liked) handleLike();
       setLikeBurst(Date.now());
     } else {
@@ -154,6 +155,17 @@ export default function ReelCard({
 
   const locked = item.video?.locked ?? !item.isUnlocked;
 
+  // Aspect inference for fill strategy. Portrait / square videos should fill
+  // the phone viewport edge-to-edge (TikTok style, cropping top/bottom when
+  // the phone's aspect is narrower than the video's). Landscape videos keep
+  // `object-contain` so they letterbox instead of cutting off faces.
+  const videoW = item.video?.width ?? 0;
+  const videoH = item.video?.height ?? 0;
+  const isLandscape = videoW > 0 && videoH > 0 && videoW > videoH;
+
+  // Chrome fade: keep mounted (so toggles work) but fade to zero and pointer-events-none.
+  const chromeClass = `transition-opacity duration-200 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`;
+
   return (
     <div
       className="relative w-full h-full flex items-center justify-center bg-black"
@@ -169,7 +181,16 @@ export default function ReelCard({
         />
       )}
 
-      {/* Main media */}
+      {/* Main media.
+          Fill strategy:
+            - Landscape videos on any viewport: object-contain with letterbox bars
+              (keep the frame intact, center it, show blurred background around).
+            - Portrait / square videos on mobile (<md): fill the viewport width
+              with object-cover so there are no side bars — vertical overflow
+              gets cropped from top and bottom, matching TikTok.
+            - Portrait / square videos on desktop (md+): object-contain centered
+              with max-width cap, since the reels column is already narrow.
+      */}
       {shouldMountVideo && item.video?.url ? (
         <video
           ref={videoRef}
@@ -179,12 +200,16 @@ export default function ReelCard({
           playsInline
           muted={muted}
           preload={preload}
-          className="relative z-0 max-w-full max-h-full object-contain"
-          style={{
-            aspectRatio: item.video.width && item.video.height
-              ? `${item.video.width} / ${item.video.height}`
-              : '9 / 16',
-          }}
+          className={
+            isLandscape
+              ? 'relative z-0 w-full max-h-full object-contain'
+              : 'relative z-0 w-full h-full object-cover md:w-auto md:h-full md:max-w-full md:object-contain'
+          }
+          style={
+            isLandscape
+              ? { aspectRatio: `${videoW} / ${videoH}` }
+              : undefined
+          }
           onTimeUpdate={(e) => {
             const v = e.currentTarget;
             if (v.duration > 0) setProgress(v.currentTime / v.duration);
@@ -198,7 +223,11 @@ export default function ReelCard({
         <img
           src={item.coverUrl}
           alt={item.title}
-          className="relative z-0 max-w-full max-h-full object-contain select-none"
+          className={
+            isLandscape
+              ? 'relative z-0 w-full max-h-full object-contain select-none'
+              : 'relative z-0 w-full h-full object-cover md:w-auto md:h-full md:max-w-full md:object-contain select-none'
+          }
           draggable={false}
         />
       ) : (
@@ -238,13 +267,13 @@ export default function ReelCard({
       <button
         onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
         aria-label={muted ? 'Unmute' : 'Mute'}
-        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur text-white flex items-center justify-center cursor-pointer"
+        className={`absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur text-white flex items-center justify-center cursor-pointer ${chromeClass}`}
       >
         <FontAwesomeIcon icon={muted ? faVolumeXmark : faVolumeHigh} className="w-4 h-4" />
       </button>
 
       {/* Right-side actions */}
-      <div className="absolute right-3 z-10 flex flex-col items-center gap-4" style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+      <div className={`absolute right-3 z-10 flex flex-col items-center gap-4 ${chromeClass}`} style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
         <button
           onClick={(e) => { e.stopPropagation(); router.push(`/creator/${item.creator.id}`); }}
           aria-label="Creator"
@@ -292,7 +321,7 @@ export default function ReelCard({
 
       {/* Bottom info */}
       <div
-        className="absolute left-3 right-20 z-10 text-white drop-shadow pointer-events-none"
+        className={`absolute left-3 right-20 z-10 text-white drop-shadow pointer-events-none ${chromeClass}`}
         style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
       >
         <div className="text-sm font-semibold">@{item.creator.name}</div>
@@ -316,7 +345,10 @@ export default function ReelCard({
 
       {/* Progress bar */}
       {active && shouldMountVideo && item.video?.url && !locked && (
-        <div className="absolute left-0 right-0 z-10 h-0.5 bg-white/20" style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+        <div
+          className={`absolute left-0 right-0 z-10 h-0.5 bg-white/20 ${chromeClass}`}
+          style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
+        >
           <div
             className="h-full bg-white/90"
             style={{ width: `${Math.round(progress * 100)}%`, transition: 'width 100ms linear' }}
