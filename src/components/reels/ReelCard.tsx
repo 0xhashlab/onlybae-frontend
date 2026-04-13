@@ -384,20 +384,25 @@ export default function ReelCard({
 
       {/* Locked overlay */}
       {locked && (
-        <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4 px-6 text-white">
-          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-            <FontAwesomeIcon icon={faLock} className="w-7 h-7" />
+        <div className="absolute inset-0 z-20 bg-black/55 backdrop-blur-sm flex flex-col items-center justify-center gap-4 px-6 text-white">
+          <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+            <FontAwesomeIcon icon={faLock} className="w-6 h-6" />
           </div>
           <div className="text-center">
+            {item.series && (
+              <div className="text-xs text-white/50 mb-1 tracking-wide uppercase">
+                {item.series.title}{item.episodeNumber != null ? ` · Ep ${item.episodeNumber}` : ''}
+              </div>
+            )}
             <div className="text-lg font-semibold">{item.title}</div>
-            <div className="text-sm text-white/70 mt-1">Unlock to watch the full video</div>
+            <div className="text-sm text-white/60 mt-1">Unlock to watch this episode</div>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); handleUnlock(); }}
             disabled={unlocking}
-            className="h-12 px-6 rounded-full bg-accent text-white font-semibold text-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            className="h-12 px-8 rounded-full bg-accent text-white font-semibold text-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
-            {unlocking ? 'Unlocking...' : `Unlock for ${item.tokenPrice} tokens`}
+            {unlocking ? 'Unlocking…' : `Unlock · ${item.tokenPrice} tokens`}
           </button>
           {error && <p className="text-red-300 text-sm text-center">{error}</p>}
         </div>
