@@ -163,9 +163,11 @@ export default function ReelCard({
   const videoH = item.video?.height ?? 0;
   const isLandscape = videoW > 0 && videoH > 0 && videoW > videoH;
   // Desktop stage: aspect-matched box centered in the card (TikTok web style).
-  // On mobile the stage fills the card; on desktop width auto-derives from
-  // `h-full` × aspect so the player matches the real video shape. Defaults to
-  // 9:16 when dimensions are missing so we don't stretch across the viewport.
+  // Mobile stage fills edge-to-edge; on desktop the width auto-derives from
+  // `h-full` × aspect so the player matches the real video shape. Falls back
+  // to 9:16 when dimensions are missing so we don't stretch across the viewport.
+  // Applied via a responsive inline style below — mobile gets `auto` so the
+  // default `w-full h-full` takes over with no aspect constraint.
   const stageAspect = videoW > 0 && videoH > 0 ? `${videoW} / ${videoH}` : '9 / 16';
 
   // Chrome fade: keep mounted (so toggles work) but fade to zero and pointer-events-none.
@@ -199,8 +201,8 @@ export default function ReelCard({
           inside the stage so it hugs the video frame, not the viewport edge.
       */}
       <div
-        className="relative h-full w-full md:w-auto md:max-w-full mx-auto"
-        style={{ aspectRatio: stageAspect }}
+        className="relative h-full w-full md:w-auto md:max-w-full mx-auto md:[aspect-ratio:var(--stage-aspect)]"
+        style={{ ['--stage-aspect' as string]: stageAspect } as React.CSSProperties}
       >
       {/* Main media fills the stage. */}
       {shouldMountVideo && item.video?.url ? (
