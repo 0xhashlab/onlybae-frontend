@@ -162,6 +162,11 @@ export default function ReelCard({
   const videoW = item.video?.width ?? 0;
   const videoH = item.video?.height ?? 0;
   const isLandscape = videoW > 0 && videoH > 0 && videoW > videoH;
+  // Desktop stage: aspect-matched box centered in the card (TikTok web style).
+  // On mobile the stage fills the card; on desktop width auto-derives from
+  // `h-full` × aspect so the player matches the real video shape. Defaults to
+  // 9:16 when dimensions are missing so we don't stretch across the viewport.
+  const stageAspect = videoW > 0 && videoH > 0 ? `${videoW} / ${videoH}` : '9 / 16';
 
   // Chrome fade: keep mounted (so toggles work) but fade to zero and pointer-events-none.
   const chromeClass = `transition-opacity duration-200 ${chromeVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`;
@@ -171,7 +176,9 @@ export default function ReelCard({
       className="relative w-full h-full flex items-center justify-center bg-black"
       style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
     >
-      {/* Background poster (blurred cover) */}
+      {/* Background poster (blurred cover) — full-bleed behind the stage so
+          desktop letterbox bars look like a cinema frame rather than dead
+          black rails. */}
       {item.coverUrl && (
         <img
           src={item.coverUrl}
@@ -181,14 +188,21 @@ export default function ReelCard({
         />
       )}
 
-      {/* Main media. Absolutely positioned to fill the card so flex centering
-          can't misalign it.
-          Fill strategy:
-            - Portrait / square video: object-cover so it fills edge-to-edge
-              like TikTok. Overflow on the long axis is center-cropped.
-            - Landscape video: object-contain so the frame stays intact with
-              letterbox bars over the blurred background poster.
+      {/*
+        Stage — the actual video frame.
+        Mobile (< md): fills the entire card (w-full h-full). The video
+          inside uses object-cover for portrait (TikTok-style edge-to-edge
+          crop) and object-contain for landscape (letterbox).
+        Desktop (md+): height fills the card, width is derived from the
+          video's real aspect ratio so the player matches the video shape.
+          All overlay chrome (actions, text, progress, locked overlay) lives
+          inside the stage so it hugs the video frame, not the viewport edge.
       */}
+      <div
+        className="relative h-full w-full md:w-auto md:max-w-full mx-auto"
+        style={{ aspectRatio: stageAspect }}
+      >
+      {/* Main media fills the stage. */}
       {shouldMountVideo && item.video?.url ? (
         <video
           ref={videoRef}
@@ -198,7 +212,7 @@ export default function ReelCard({
           playsInline
           muted={muted}
           preload={preload}
-          className={`absolute inset-0 w-full h-full z-0 ${isLandscape ? 'object-contain' : 'object-cover'}`}
+          className={`absolute inset-0 w-full h-full z-0 ${isLandscape ? 'md:object-cover object-contain' : 'object-cover'}`}
           onTimeUpdate={(e) => {
             const v = e.currentTarget;
             if (v.duration > 0) setProgress(v.currentTime / v.duration);
@@ -212,7 +226,7 @@ export default function ReelCard({
         <img
           src={item.coverUrl}
           alt={item.title}
-          className={`absolute inset-0 w-full h-full z-0 select-none ${isLandscape ? 'object-contain' : 'object-cover'}`}
+          className={`absolute inset-0 w-full h-full z-0 select-none ${isLandscape ? 'md:object-cover object-contain' : 'object-cover'}`}
           draggable={false}
         />
       ) : (
@@ -369,6 +383,8 @@ export default function ReelCard({
           {error && <p className="text-red-300 text-sm text-center">{error}</p>}
         </div>
       )}
+      </div>
+      {/* /stage */}
 
       {/* Heart burst keyframes */}
       <style jsx>{`
