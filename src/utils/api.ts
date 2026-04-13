@@ -105,10 +105,11 @@ export const userApi = {
     return request<any>(`/api/user/series?${qs}`);
   },
   getSeriesDetail: (id: string) => request<any>(`/api/user/series/${id}`),
-  browseReels: (params?: { page?: number; limit?: number }) => {
+  browseReels: (params?: { page?: number; limit?: number; seriesId?: string }) => {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.seriesId) qs.set('seriesId', params.seriesId);
     return request<{ items: ReelItem[]; total: number; page: number; limit: number }>(`/api/user/reels?${qs}`);
   },
   getCdnCookies: () => request('/api/user/cdn-cookies'),

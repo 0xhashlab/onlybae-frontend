@@ -301,7 +301,16 @@ export default function ReelCard({
           <div className="text-xs text-white/80 line-clamp-2 mt-1">{item.description}</div>
         )}
         {item.series && (
-          <div className="text-[11px] text-white/70 mt-1">From: {item.series.title}</div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/reels/browse/${item.series!.id}`);
+            }}
+            className="text-[11px] text-white/80 hover:text-white mt-1 pointer-events-auto inline-flex items-center gap-1 cursor-pointer"
+          >
+            From: <span className="underline">{item.series.title}</span>
+          </button>
         )}
       </div>
 

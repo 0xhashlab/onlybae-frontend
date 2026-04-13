@@ -10,7 +10,14 @@ const MUTE_KEY = 'onlybae:reels:muted';
 // Signed URLs from S3/CloudFront expire after ~60 minutes. Refetch preemptively.
 const MAX_DATA_AGE_MS = 40 * 60 * 1000;
 
-export default function ReelFeed() {
+interface ReelFeedProps {
+  /** When set, feed is scoped to a single reels series, ordered by ep number asc. */
+  seriesId?: string;
+  /** When set, auto-scroll to the episode with this content id on initial load. */
+  startEpisodeId?: string;
+}
+
+export default function ReelFeed({ seriesId, startEpisodeId }: ReelFeedProps = {}) {
   const [items, setItems] = useState<ReelItem[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -30,6 +37,8 @@ export default function ReelFeed() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const wheelLockRef = useRef<number>(0);
+  // Tracks whether the initial auto-scroll to `startEpisodeId` has happened yet.
+  const startScrollDoneRef = useRef<boolean>(!startEpisodeId);
 
   // Restore persisted mute preference.
   useEffect(() => {
@@ -57,7 +66,7 @@ export default function ReelFeed() {
   }, [activeIndex]);
 
   const fetchPage = useCallback(async (targetPage: number, replace = false) => {
-    const res = await userApi.browseReels({ page: targetPage, limit: PAGE_SIZE });
+    const res = await userApi.browseReels({ page: targetPage, limit: PAGE_SIZE, seriesId });
     const newItems = res.data.items || [];
     if (replace) {
       setItems(newItems);
@@ -67,7 +76,7 @@ export default function ReelFeed() {
     setHasMore(newItems.length === PAGE_SIZE);
     dataLoadedAtRef.current = Date.now();
     return newItems;
-  }, []);
+  }, [seriesId]);
 
   // Initial load
   useEffect(() => {
@@ -130,6 +139,42 @@ export default function ReelFeed() {
     }
   }, []);
 
+  // Jump to the requested start episode. If it's not in the already-loaded
+  // items and there are more pages, load more until we find it (bounded so
+  // we don't spin forever on a stale URL param).
+  useEffect(() => {
+    if (!startEpisodeId || startScrollDoneRef.current || loading) return;
+    const idx = items.findIndex(it => it.id === startEpisodeId);
+    if (idx >= 0) {
+      // Instant jump (no smooth) so the user doesn't see cards whiz past.
+      const el = cardRefs.current.get(idx);
+      if (el) {
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+        setActiveIndex(idx);
+      }
+      startScrollDoneRef.current = true;
+      return;
+    }
+    // Not loaded yet — fetch next page if possible.
+    if (hasMore && !loadingMore) {
+      (async () => {
+        setLoadingMore(true);
+        try {
+          const next = page + 1;
+          await fetchPage(next);
+          setPage(next);
+        } catch {
+          startScrollDoneRef.current = true;
+        } finally {
+          setLoadingMore(false);
+        }
+      })();
+    } else {
+      // Ran out of pages without finding it — stop trying.
+      startScrollDoneRef.current = true;
+    }
+  }, [startEpisodeId, items, loading, hasMore, loadingMore, page, fetchPage]);
+
   // Refetch everything if a video errors out (likely signed URL expiry).
   // Also refetch when data is older than MAX_DATA_AGE_MS at scroll time.
   const refetchIfStale = useCallback(async (force = false) => {
@@ -139,7 +184,7 @@ export default function ReelFeed() {
     refetchingRef.current = true;
     try {
       // Refetch page 1 (newest content) and merge by id so scroll position is preserved.
-      const res = await userApi.browseReels({ page: 1, limit: Math.max(PAGE_SIZE, items.length) });
+      const res = await userApi.browseReels({ page: 1, limit: Math.max(PAGE_SIZE, items.length), seriesId });
       const refreshed = res.data.items || [];
       if (refreshed.length > 0) {
         const byId = new Map(refreshed.map(r => [r.id, r]));
@@ -150,7 +195,7 @@ export default function ReelFeed() {
     finally {
       refetchingRef.current = false;
     }
-  }, [items.length]);
+  }, [items.length, seriesId]);
 
   // Wheel + keyboard nav
   useEffect(() => {
