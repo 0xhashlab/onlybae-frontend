@@ -248,17 +248,17 @@ export default function ReelCard({
         </div>
       )}
 
-      {/* Mute toggle (explicit button — stays clickable above the tap surface) */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
-        aria-label={muted ? 'Unmute' : 'Mute'}
-        className={`absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 backdrop-blur text-white flex items-center justify-center cursor-pointer ${chromeClass}`}
-      >
-        <FontAwesomeIcon icon={muted ? faVolumeXmark : faVolumeHigh} className="w-4 h-4" />
-      </button>
-
-      {/* Right-side actions */}
+      {/* Right-side actions. Mute lives at the top of this column now so it
+          doesn't collide with the top-right Hide UI pill and the For You /
+          Browse All tab bar. */}
       <div className={`absolute right-3 z-10 flex flex-col items-center gap-4 ${chromeClass}`} style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
+          aria-label={muted ? 'Unmute' : 'Mute'}
+          className="w-10 h-10 rounded-full bg-black/40 backdrop-blur text-white flex items-center justify-center cursor-pointer"
+        >
+          <FontAwesomeIcon icon={muted ? faVolumeXmark : faVolumeHigh} className="w-4 h-4" />
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); router.push(`/creator/${item.creator.id}`); }}
           aria-label="Creator"

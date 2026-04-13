@@ -51,30 +51,33 @@ function ReelsPageInner() {
           them. Also hidden in UI-off mode. */}
       {!inSeriesMode && chromeVisible && <ReelsTabs variant="overlay" />}
 
-      {/* Scoped-mode back control, top-left with text. Only when a specific
-          series is being played. Hidden when the viewer is in UI-off mode. */}
+      {/* Scoped-mode back control, top-left. Only when a specific series is
+          being played. Hidden when the viewer is in UI-off mode.
+          Mobile = icon-only circle; desktop = pill with text. */}
       {inSeriesMode && chromeVisible && (
         <button
           onClick={() => router.push('/reels/browse')}
           aria-label="Back to all reels"
-          className="absolute z-20 flex items-center gap-2 h-9 pl-2 pr-3 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
+          className="absolute z-20 flex items-center justify-center md:gap-2 w-10 h-10 md:w-auto md:h-9 md:pl-2 md:pr-3 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
           style={{ top: 'calc(1rem + env(safe-area-inset-top))', left: '1rem' }}
         >
           <FontAwesomeIcon icon={faArrowLeft} className="w-3.5 h-3.5" />
-          Back
+          <span className="hidden md:inline">Back</span>
         </button>
       )}
 
-      {/* UI-visibility toggle, top-right with text. Always visible regardless
-          of chromeVisible so the user can always get the UI back. */}
+      {/* UI-visibility toggle, top-right. Always visible regardless of
+          chromeVisible so the user can always get the UI back.
+          Mobile = icon-only circle to save horizontal space; desktop = pill with text. */}
       <button
         onClick={() => setChromeVisible((v) => !v)}
         aria-label={chromeVisible ? 'Hide UI' : 'Show UI'}
-        className="absolute z-30 flex items-center gap-2 h-9 pl-3 pr-4 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
+        title={chromeVisible ? 'Hide UI' : 'Show UI'}
+        className="absolute z-30 flex items-center justify-center md:gap-2 w-10 h-10 md:w-auto md:h-9 md:pl-3 md:pr-4 rounded-full bg-black/60 backdrop-blur text-white text-sm cursor-pointer"
         style={{ top: 'calc(1rem + env(safe-area-inset-top))', right: '1rem' }}
       >
         <FontAwesomeIcon icon={chromeVisible ? faEyeSlash : faEye} className="w-4 h-4" />
-        {chromeVisible ? 'Hide UI' : 'Show UI'}
+        <span className="hidden md:inline">{chromeVisible ? 'Hide UI' : 'Show UI'}</span>
       </button>
     </div>
   );
