@@ -339,16 +339,28 @@ export default function ReelCard({
           <div className="hidden md:block text-xs text-white/80 line-clamp-2 mt-1">{item.description}</div>
         )}
         {item.series && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/reels/browse/${item.series!.id}`);
-            }}
-            className="text-[11px] text-white/75 hover:text-white mt-0.5 pointer-events-auto inline-flex items-center gap-1 cursor-pointer"
-          >
-            From: <span className="underline">{item.series.title}</span>
-          </button>
+          <div className="flex items-center gap-2 mt-0.5 pointer-events-auto flex-wrap">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/reels/browse/${item.series!.id}`);
+              }}
+              className="text-[11px] text-white/75 hover:text-white inline-flex items-center gap-1 cursor-pointer"
+            >
+              From: <span className="underline">{item.series.title}</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/reels?seriesId=${item.series!.id}&start=${item.id}`);
+              }}
+              className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 font-medium cursor-pointer transition-colors"
+            >
+              看全集
+            </button>
+          </div>
         )}
       </div>
 

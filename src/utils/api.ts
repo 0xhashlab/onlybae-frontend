@@ -97,11 +97,12 @@ export const userApi = {
     if (params?.limit) qs.set('limit', String(params.limit));
     return request<any>(`/api/user/unlocked?${qs}`);
   },
-  browseSeries: (params?: { page?: number; limit?: number; type?: 'normal' | 'reels' | 'comic' }) => {
+  browseSeries: (params?: { page?: number; limit?: number; type?: 'normal' | 'reels' | 'comic'; q?: string }) => {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
     if (params?.type) qs.set('type', params.type);
+    if (params?.q) qs.set('q', params.q);
     return request<any>(`/api/user/series?${qs}`);
   },
   getSeriesDetail: (id: string) => request<any>(`/api/user/series/${id}`),
