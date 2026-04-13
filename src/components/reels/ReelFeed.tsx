@@ -313,11 +313,16 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
   return (
     <div
       ref={containerRef}
-      className="w-full h-full overflow-y-scroll bg-black reel-scroll"
+      className="w-full h-full overflow-y-scroll overflow-x-hidden bg-black reel-scroll"
       style={{
         scrollSnapType: 'y mandatory',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
+        // iOS PWA momentum scroll will otherwise bounce horizontally on any
+        // touch pan, dragging the whole feed off-screen. Limiting touch-action
+        // to vertical makes the feed ignore horizontal gestures entirely.
+        touchAction: 'pan-y',
+        overscrollBehavior: 'contain',
       }}
     >
       <style jsx>{`
@@ -328,7 +333,7 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
           key={item.id}
           ref={setCardRef(idx)}
           data-index={idx}
-          className="w-full h-full"
+          className="w-full h-full overflow-hidden"
           style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
         >
           <ReelCard

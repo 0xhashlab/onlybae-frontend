@@ -175,7 +175,7 @@ export default function ReelCard({
 
   return (
     <div
-      className="relative w-full h-full flex items-center justify-center bg-black"
+      className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black"
       style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
     >
       {/* Background poster (blurred cover) — full-bleed behind the stage so
