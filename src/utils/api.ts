@@ -66,6 +66,22 @@ export const userApi = {
   topUp: (amount: number) =>
     request('/api/user/topup', { method: 'POST', body: JSON.stringify({ amount }) }),
 
+  getWalletInfo: () => request<{
+    depositAddressEvm: string;
+    tokenBalance: number;
+    tokensPerUsd: number;
+    minDepositUsd: number;
+    networks: { key: string; name: string; recommended: boolean; tokens: string[] }[];
+    recentDeposits: {
+      id: string; txHash: string; network: string; token: string;
+      amountUsd: string; tokensAwarded: number; status: string; createdAt: string;
+    }[];
+  }>('/api/user/wallet'),
+
+  checkDeposits: () => request<{ newDeposits: unknown[]; newBalance: number }>(
+    '/api/user/wallet/check', { method: 'POST' }
+  ),
+
   getTransactions: (params: { page?: number; limit?: number } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
