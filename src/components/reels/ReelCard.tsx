@@ -251,7 +251,7 @@ export default function ReelCard({
       {/* Right-side actions. Mute lives at the top of this column now so it
           doesn't collide with the top-right Hide UI pill and the For You /
           Browse All tab bar. */}
-      <div className={`absolute right-3 z-10 flex flex-col items-center gap-4 ${chromeClass}`} style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+      <div className={`absolute right-3 z-10 flex flex-col items-center gap-3 ${chromeClass}`} style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
           aria-label={muted ? 'Unmute' : 'Mute'}
@@ -304,15 +304,28 @@ export default function ReelCard({
         </button>
       </div>
 
-      {/* Bottom info */}
+      {/* Bottom gradient scrim — darkens just the bottom strip so white text
+          stays legible without covering most of the frame. */}
+      <div
+        className={`absolute left-0 right-0 z-[8] pointer-events-none bg-gradient-to-t from-black/70 via-black/20 to-transparent ${chromeClass}`}
+        style={{
+          bottom: 0,
+          height: 'calc(7rem + env(safe-area-inset-bottom))',
+        }}
+      />
+
+      {/* Bottom info — compact so it covers as little of the video as
+          possible. Creator + title only on mobile; description appears on
+          desktop where space is plentiful. Series link stays (it's the
+          pathway back to a show). */}
       <div
         className={`absolute left-3 right-20 z-10 text-white drop-shadow pointer-events-none ${chromeClass}`}
-        style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
+        style={{ bottom: 'calc(1.75rem + env(safe-area-inset-bottom))' }}
       >
-        <div className="text-sm font-semibold">@{item.creator.name}</div>
-        <div className="text-base font-medium line-clamp-2 mt-0.5">{item.title}</div>
+        <div className="text-sm font-semibold truncate">@{item.creator.name}</div>
+        <div className="text-sm font-medium line-clamp-1 mt-0.5">{item.title}</div>
         {item.description && (
-          <div className="text-xs text-white/80 line-clamp-2 mt-1">{item.description}</div>
+          <div className="hidden md:block text-xs text-white/80 line-clamp-2 mt-1">{item.description}</div>
         )}
         {item.series && (
           <button
@@ -321,18 +334,19 @@ export default function ReelCard({
               e.stopPropagation();
               router.push(`/reels/browse/${item.series!.id}`);
             }}
-            className="text-[11px] text-white/80 hover:text-white mt-1 pointer-events-auto inline-flex items-center gap-1 cursor-pointer"
+            className="text-[11px] text-white/75 hover:text-white mt-0.5 pointer-events-auto inline-flex items-center gap-1 cursor-pointer"
           >
             From: <span className="underline">{item.series.title}</span>
           </button>
         )}
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar sits right at the very bottom of the card (above the
+          home indicator safe area). Thin, unobtrusive, full-width. */}
       {active && shouldMountVideo && item.video?.url && !locked && (
         <div
-          className={`absolute left-0 right-0 z-10 h-0.5 bg-white/20 ${chromeClass}`}
-          style={{ bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}
+          className={`absolute left-0 right-0 z-10 h-0.5 bg-white/15 ${chromeClass}`}
+          style={{ bottom: 'calc(0.25rem + env(safe-area-inset-bottom))' }}
         >
           <div
             className="h-full bg-white/90"
