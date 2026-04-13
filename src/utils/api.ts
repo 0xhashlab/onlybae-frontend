@@ -106,6 +106,8 @@ export const userApi = {
     return request<any>(`/api/user/series?${qs}`);
   },
   getSeriesDetail: (id: string) => request<any>(`/api/user/series/${id}`),
+  unlockSeries: (seriesId: string) =>
+    request<any>(`/api/user/series/${seriesId}/unlock`, { method: 'POST' }),
   browseReels: (params?: { page?: number; limit?: number; seriesId?: string }) => {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
@@ -123,12 +125,13 @@ export interface ReelItem {
   tokenPrice: number;
   isFree: boolean;
   isUnlocked: boolean;
+  isSeriesUnlocked: boolean;
   likeCount: number;
   commentCount: number;
   liked: boolean;
   favorited: boolean;
   creator: { id: string; name: string; avatarUrl?: string };
-  series: { id: string; title: string } | null;
+  series: { id: string; title: string; bundlePrice: number | null } | null;
   episodeNumber: number | null;
   createdAt: string;
   coverUrl: string | null;

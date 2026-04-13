@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { userApi } from '@/utils/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faPlay, faLock, faVideo } from '@fortawesome/free-solid-svg-icons';
 
@@ -27,6 +28,8 @@ interface ReelsSeriesDetail {
   coverUrl: string | null;
   type: 'normal' | 'reels' | 'comic';
   contentCount: number;
+  bundlePrice: number | null;
+  isSeriesUnlocked: boolean;
   creator?: { id: string; name: string; avatarUrl?: string };
   contents: ReelsEpisode[];
 }
@@ -35,14 +38,43 @@ export default function ReelsSeriesDetail() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const { isAuthenticated, refreshUser } = useAuth();
   const [series, setSeries] = useState<ReelsSeriesDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [seriesUnlocking, setSeriesUnlocking] = useState(false);
+  const [seriesUnlockError, setSeriesUnlockError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchSeries = useCallback(() => {
+    setLoading(true);
     userApi.getSeriesDetail(id).then(res => {
       setSeries(res.data as ReelsSeriesDetail);
     }).finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    fetchSeries();
+  }, [fetchSeries]);
+
+  const handleUnlockSeries = async () => {
+    if (!isAuthenticated) { router.push('/login'); return; }
+    if (seriesUnlocking) return;
+    setSeriesUnlocking(true);
+    setSeriesUnlockError(null);
+    try {
+      const res = await userApi.unlockSeries(id);
+      const data = res.data as { insufficientBalance?: boolean; required?: number; current?: number } | null;
+      if (data?.insufficientBalance) {
+        setSeriesUnlockError(`Need ${data.required} tokens (you have ${data.current})`);
+        return;
+      }
+      refreshUser?.();
+      fetchSeries();
+    } catch (err) {
+      setSeriesUnlockError((err as Error).message || 'Unlock failed');
+    } finally {
+      setSeriesUnlocking(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -121,6 +153,19 @@ export default function ReelsSeriesDetail() {
               <FontAwesomeIcon icon={faPlay} className="w-3.5 h-3.5" />
               Play from Ep {firstEp.orderInSeries ?? 1}
             </button>
+          )}
+          {series.bundlePrice && !series.isSeriesUnlocked && (
+            <div className="mt-3 w-full md:w-auto max-w-sm flex flex-col items-center gap-2">
+              <button
+                onClick={handleUnlockSeries}
+                disabled={seriesUnlocking}
+                className="w-full h-12 px-8 rounded-full border border-border text-foreground font-semibold text-sm cursor-pointer disabled:opacity-50 hover:bg-surface-hover transition-colors flex items-center justify-center gap-2"
+              >
+                <FontAwesomeIcon icon={faLock} className="w-3.5 h-3.5" />
+                {seriesUnlocking ? 'Unlocking…' : `Unlock full series · ${series.bundlePrice} tokens`}
+              </button>
+              {seriesUnlockError && <p className="text-red-400 text-xs text-center">{seriesUnlockError}</p>}
+            </div>
           )}
         </div>
       </div>

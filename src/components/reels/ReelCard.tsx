@@ -48,6 +48,8 @@ export default function ReelCard({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seriesUnlocking, setSeriesUnlocking] = useState(false);
+  const [seriesError, setSeriesError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [likeBurst, setLikeBurst] = useState(0);
   const tapTimerRef = useRef<number | null>(null);
@@ -129,6 +131,26 @@ export default function ReelCard({
       setError((err as Error).message || 'Unlock failed');
     } finally {
       setUnlocking(false);
+    }
+  };
+
+  const handleUnlockSeries = async () => {
+    if (!requireAuth() || seriesUnlocking || !item.series) return;
+    setSeriesUnlocking(true);
+    setSeriesError(null);
+    try {
+      const res = await userApi.unlockSeries(item.series.id);
+      const data = res.data as { insufficientBalance?: boolean; required?: number; current?: number } | null;
+      if (data?.insufficientBalance) {
+        setSeriesError(`Need ${data.required} tokens (you have ${data.current})`);
+        return;
+      }
+      onChange({ ...item, isUnlocked: true, isSeriesUnlocked: true, video: item.video ? { ...item.video, locked: false } : null });
+      refreshUser?.();
+    } catch (err) {
+      setSeriesError((err as Error).message || 'Unlock failed');
+    } finally {
+      setSeriesUnlocking(false);
     }
   };
 
@@ -402,9 +424,21 @@ export default function ReelCard({
             disabled={unlocking}
             className="h-12 px-8 rounded-full bg-accent text-white font-semibold text-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
-            {unlocking ? 'Unlocking…' : `Unlock · ${item.tokenPrice} tokens`}
+            {unlocking ? 'Unlocking…' : `Unlock episode · ${item.tokenPrice} tokens`}
           </button>
           {error && <p className="text-red-300 text-sm text-center">{error}</p>}
+          {item.series?.bundlePrice && !item.isSeriesUnlocked && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleUnlockSeries(); }}
+                disabled={seriesUnlocking}
+                className="h-12 px-8 rounded-full border border-white/40 text-white font-semibold text-sm cursor-pointer disabled:opacity-50 flex items-center gap-2 hover:bg-white/10 transition-colors"
+              >
+                {seriesUnlocking ? 'Unlocking…' : `Unlock full series · ${item.series.bundlePrice} tokens`}
+              </button>
+              {seriesError && <p className="text-red-300 text-sm text-center">{seriesError}</p>}
+            </>
+          )}
         </div>
       )}
       </div>

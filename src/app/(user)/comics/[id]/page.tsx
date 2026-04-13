@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { userApi } from '@/utils/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faLock, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 
@@ -26,6 +27,8 @@ interface ComicDetail {
   coverUrl: string | null;
   contentCount: number;
   type: 'normal' | 'reels' | 'comic';
+  bundlePrice: number | null;
+  isSeriesUnlocked: boolean;
   creator?: { id: string; name: string; avatarUrl?: string };
   contents: Chapter[];
 }
@@ -34,14 +37,43 @@ export default function ComicDetail() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const { isAuthenticated, refreshUser } = useAuth();
   const [series, setSeries] = useState<ComicDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [seriesUnlocking, setSeriesUnlocking] = useState(false);
+  const [seriesUnlockError, setSeriesUnlockError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchSeries = useCallback(() => {
+    setLoading(true);
     userApi.getSeriesDetail(id).then(res => {
       setSeries(res.data);
     }).finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    fetchSeries();
+  }, [fetchSeries]);
+
+  const handleUnlockSeries = async () => {
+    if (!isAuthenticated) { router.push('/login'); return; }
+    if (seriesUnlocking) return;
+    setSeriesUnlocking(true);
+    setSeriesUnlockError(null);
+    try {
+      const res = await userApi.unlockSeries(id);
+      const data = res.data as { insufficientBalance?: boolean; required?: number; current?: number } | null;
+      if (data?.insufficientBalance) {
+        setSeriesUnlockError(`Need ${data.required} tokens (you have ${data.current})`);
+        return;
+      }
+      refreshUser?.();
+      fetchSeries();
+    } catch (err) {
+      setSeriesUnlockError((err as Error).message || 'Unlock failed');
+    } finally {
+      setSeriesUnlocking(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -94,6 +126,19 @@ export default function ComicDetail() {
             <p className="text-sm text-secondary mt-3 whitespace-pre-line">{series.description}</p>
           )}
           <p className="text-sm text-muted mt-2">{chapters.length} chapters</p>
+          {series.bundlePrice && !series.isSeriesUnlocked && (
+            <div className="mt-4 flex flex-col items-start gap-2">
+              <button
+                onClick={handleUnlockSeries}
+                disabled={seriesUnlocking}
+                className="h-11 px-6 rounded-full border border-border text-foreground font-semibold text-sm cursor-pointer disabled:opacity-50 hover:bg-surface-hover transition-colors flex items-center gap-2"
+              >
+                <FontAwesomeIcon icon={faLock} className="w-3.5 h-3.5" />
+                {seriesUnlocking ? 'Unlocking…' : `Unlock full comic · ${series.bundlePrice} tokens`}
+              </button>
+              {seriesUnlockError && <p className="text-red-400 text-xs">{seriesUnlockError}</p>}
+            </div>
+          )}
         </div>
       </div>
 
