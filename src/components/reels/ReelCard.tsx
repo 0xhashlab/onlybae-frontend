@@ -334,7 +334,12 @@ export default function ReelCard({
         className={`absolute left-3 right-20 bottom-7 z-10 text-white drop-shadow pointer-events-none ${chromeClass}`}
       >
         <div className="text-sm font-semibold truncate">@{item.creator.name}</div>
-        <div className="text-sm font-medium line-clamp-1 mt-0.5">{item.title}</div>
+        <div className="text-sm font-medium line-clamp-1 mt-0.5">
+          {item.series && item.episodeNumber != null && (
+            <span className="text-white/60 mr-1">Ep {item.episodeNumber} ·</span>
+          )}
+          {item.title}
+        </div>
         {item.description && (
           <div className="hidden md:block text-xs text-white/80 line-clamp-2 mt-1">{item.description}</div>
         )}
@@ -358,7 +363,7 @@ export default function ReelCard({
               }}
               className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-white/90 font-medium cursor-pointer transition-colors"
             >
-              看全集
+              All Episodes
             </button>
           </div>
         )}
