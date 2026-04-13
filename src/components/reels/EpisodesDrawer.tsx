@@ -85,7 +85,6 @@ export default function EpisodesDrawer({
   if (!open) return null;
 
   const episodes = (series?.contents || [])
-    .filter(ep => ep.status === 'approved')
     .sort((a, b) => (a.orderInSeries ?? 0) - (b.orderInSeries ?? 0));
 
   return (

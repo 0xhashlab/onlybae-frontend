@@ -363,6 +363,7 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
             muted={muted}
             userPaused={userPausedIndex === idx}
             chromeVisible={chromeVisible}
+            inSeriesMode={!!seriesId}
             onToggleMute={toggleMute}
             onTogglePause={togglePauseActive}
             onChange={updateItem}

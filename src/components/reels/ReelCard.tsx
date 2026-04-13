@@ -24,6 +24,8 @@ interface ReelCardProps {
   onVideoError?: () => void;
   onOpenComments: (id: string) => void;
   onOpenEpisodes: (seriesId: string, currentEpisodeId: string) => void;
+  /** When true, user is already watching the full series feed — hide redundant series navigation. */
+  inSeriesMode?: boolean;
 }
 
 // Distance within which we actually mount the <video> element.
@@ -44,6 +46,7 @@ export default function ReelCard({
   onVideoError,
   onOpenComments,
   onOpenEpisodes,
+  inSeriesMode = false,
 }: ReelCardProps) {
   const router = useRouter();
   const { isAuthenticated, refreshUser } = useAuth();
@@ -377,7 +380,7 @@ export default function ReelCard({
         {item.description && (
           <div className="hidden md:block text-xs text-white/80 line-clamp-2 mt-1">{item.description}</div>
         )}
-        {item.series && (
+        {item.series && !inSeriesMode && (
           <div className="flex items-center gap-2 mt-0.5 pointer-events-auto flex-wrap">
             <button
               type="button"
