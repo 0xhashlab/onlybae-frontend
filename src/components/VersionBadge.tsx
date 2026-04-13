@@ -6,7 +6,7 @@ import { useState } from 'react';
 // Baked in at build time via next.config.ts env.NEXT_PUBLIC_APP_VERSION.
 // Click to copy — makes it easy for users to include in bug reports.
 export default function VersionBadge({ className = '' }: { className?: string }) {
-  const version = process.env.NEXT_PUBLIC_APP_VERSION;
+  const version = process.env.NEXT_PUBLIC_APP_VERSION?.trim();
   const [copied, setCopied] = useState(false);
 
   if (!version) return null;
