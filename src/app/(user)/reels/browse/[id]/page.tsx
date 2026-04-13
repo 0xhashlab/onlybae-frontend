@@ -25,7 +25,7 @@ interface ReelsSeriesDetail {
   title: string;
   description: string | null;
   coverUrl: string | null;
-  type: 'normal' | 'reels' | 'manga';
+  type: 'normal' | 'reels' | 'comic';
   contentCount: number;
   creator?: { id: string; name: string; avatarUrl?: string };
   contents: ReelsEpisode[];
@@ -55,7 +55,7 @@ export default function ReelsSeriesDetail() {
     return <div className="text-center py-20"><p className="text-muted">Series not found.</p></div>;
   }
   // Safety: if someone opened a non-reels series via this route, redirect to the right place.
-  if (series.type === 'manga') { router.replace(`/manga/${id}`); return null; }
+  if (series.type === 'comic') { router.replace(`/comics/${id}`); return null; }
   if (series.type === 'normal') { router.replace(`/series/${id}`); return null; }
 
   const episodes = (series.contents || []).slice().sort((a, b) => (a.orderInSeries ?? 0) - (b.orderInSeries ?? 0));

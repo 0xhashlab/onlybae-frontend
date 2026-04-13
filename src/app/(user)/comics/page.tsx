@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 const PAGE_SIZE = 24;
 
-interface MangaSeries {
+interface ComicSeries {
   id: string;
   title: string;
   description?: string | null;
@@ -15,9 +15,9 @@ interface MangaSeries {
   creator?: { id: string; name: string };
 }
 
-export default function MangaBrowse() {
+export default function ComicBrowse() {
   const router = useRouter();
-  const [series, setSeries] = useState<MangaSeries[]>([]);
+  const [series, setSeries] = useState<ComicSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -28,8 +28,8 @@ export default function MangaBrowse() {
     if (append) setLoadingMore(true);
     else setLoading(true);
     try {
-      const res = await userApi.browseSeries({ page: pageNum, limit: PAGE_SIZE, type: 'manga' });
-      const data = res.data as { items: MangaSeries[]; total: number };
+      const res = await userApi.browseSeries({ page: pageNum, limit: PAGE_SIZE, type: 'comic' });
+      const data = res.data as { items: ComicSeries[]; total: number };
       const newItems = data.items || [];
       setSeries(prev => append ? [...prev, ...newItems] : newItems);
       setHasMore(pageNum * PAGE_SIZE < data.total);
@@ -66,7 +66,7 @@ export default function MangaBrowse() {
 
   return (
     <div>
-      <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-2">Manga</h1>
+      <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-2">Comic</h1>
       <p className="text-sm text-muted mb-6 md:mb-8">Read page-by-page in the immersive reader.</p>
 
       {loading ? (
@@ -75,7 +75,7 @@ export default function MangaBrowse() {
         </div>
       ) : series.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-muted">No manga yet.</p>
+          <p className="text-muted">No comic yet.</p>
         </div>
       ) : (
         <>
@@ -83,10 +83,10 @@ export default function MangaBrowse() {
             {series.map((s) => (
               <div
                 key={s.id}
-                onClick={() => router.push(`/manga/${s.id}`)}
+                onClick={() => router.push(`/comics/${s.id}`)}
                 className="cursor-pointer group"
               >
-                {/* 2:3 portrait cover, standard manga aspect */}
+                {/* 2:3 portrait cover, standard comic aspect */}
                 <div className="aspect-[2/3] bg-surface-hover rounded-lg overflow-hidden border border-border group-hover:border-accent/50 transition-colors">
                   {s.coverUrl ? (
                     <img
@@ -118,7 +118,7 @@ export default function MangaBrowse() {
             </div>
           )}
           {!hasMore && series.length > 0 && (
-            <p className="text-center text-muted text-xs py-8">No more manga</p>
+            <p className="text-center text-muted text-xs py-8">No more comic</p>
           )}
         </>
       )}

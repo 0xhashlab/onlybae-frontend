@@ -15,7 +15,7 @@ type MenuItem = { key: string; icon: React.ReactNode; label: string; authOnly?: 
 const publicMenuItems: MenuItem[] = [
   { key: '/browse', icon: <FontAwesomeIcon icon={faGrip} className="w-4 h-4" />, label: 'Browse' },
   { key: '/reels', icon: <FontAwesomeIcon icon={faVideo} className="w-4 h-4" />, label: 'Reels' },
-  { key: '/manga', icon: <FontAwesomeIcon icon={faBookOpen} className="w-4 h-4" />, label: 'Manga' },
+  { key: '/comics', icon: <FontAwesomeIcon icon={faBookOpen} className="w-4 h-4" />, label: 'Comic' },
   { key: '/series', icon: <FontAwesomeIcon icon={faBook} className="w-4 h-4" />, label: 'Series' },
 ];
 
@@ -30,7 +30,7 @@ const authMenuItems: MenuItem[] = [
 const mobileTabs: MenuItem[] = [
   { key: '/browse', icon: <FontAwesomeIcon icon={faGrip} className="w-5 h-5" />, label: 'Browse' },
   { key: '/reels', icon: <FontAwesomeIcon icon={faVideo} className="w-5 h-5" />, label: 'Reels' },
-  { key: '/manga', icon: <FontAwesomeIcon icon={faBookOpen} className="w-5 h-5" />, label: 'Manga' },
+  { key: '/comics', icon: <FontAwesomeIcon icon={faBookOpen} className="w-5 h-5" />, label: 'Comic' },
   { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-5 h-5" />, label: 'Favorites', authOnly: true },
   { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-5 h-5" />, label: 'Me', authOnly: true },
 ];

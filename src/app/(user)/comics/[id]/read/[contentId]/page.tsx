@@ -32,7 +32,7 @@ interface SeriesContents {
   contents: { id: string; title: string; orderInSeries: number | null; isUnlocked: boolean; isFree: boolean }[];
 }
 
-export default function MangaReader() {
+export default function ComicReader() {
   const params = useParams();
   const router = useRouter();
   const seriesId = params.id as string;
@@ -111,7 +111,7 @@ export default function MangaReader() {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (chapterListOpen) setChapterListOpen(false);
-        else router.push(`/manga/${seriesId}`);
+        else router.push(`/comics/${seriesId}`);
       } else if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault();
         containerRef.current?.scrollBy({ top: window.innerHeight * 0.9, behavior: 'smooth' });
@@ -136,7 +136,7 @@ export default function MangaReader() {
       router.push(`/content/${ch.id}`);
       return;
     }
-    router.push(`/manga/${seriesId}/read/${ch.id}`);
+    router.push(`/comics/${seriesId}/read/${ch.id}`);
   };
 
   if (loading) {
@@ -166,7 +166,7 @@ export default function MangaReader() {
           Unlock for {chapter.tokenPrice} tokens
         </button>
         <button
-          onClick={() => router.push(`/manga/${seriesId}`)}
+          onClick={() => router.push(`/comics/${seriesId}`)}
           className="text-white/70 text-sm cursor-pointer hover:text-white"
         >
           Back to chapter list
@@ -222,7 +222,7 @@ export default function MangaReader() {
                 <p className="text-white/70 text-sm">You&apos;ve reached the latest chapter.</p>
               )}
               <button
-                onClick={() => router.push(`/manga/${seriesId}`)}
+                onClick={() => router.push(`/comics/${seriesId}`)}
                 className="text-white/60 text-xs hover:text-white cursor-pointer underline"
               >
                 Back to chapter list
@@ -238,7 +238,7 @@ export default function MangaReader() {
       >
         <div className="flex items-center gap-3 px-4 py-3 pointer-events-auto" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
           <button
-            onClick={() => router.push(`/manga/${seriesId}`)}
+            onClick={() => router.push(`/comics/${seriesId}`)}
             aria-label="Close reader"
             className="w-10 h-10 flex items-center justify-center rounded-full bg-black/50 backdrop-blur text-white cursor-pointer"
           >

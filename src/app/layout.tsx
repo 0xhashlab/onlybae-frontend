@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: 'OnlyBae',
-  description: 'Premium content, reels, and manga from your favorite creators.',
+  description: 'Premium content, reels, and comic from your favorite creators.',
   applicationName: 'OnlyBae',
   manifest: '/manifest.json',
   icons: {

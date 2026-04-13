@@ -19,22 +19,22 @@ interface Chapter {
   createdAt: string;
 }
 
-interface MangaDetail {
+interface ComicDetail {
   id: string;
   title: string;
   description: string | null;
   coverUrl: string | null;
   contentCount: number;
-  type: 'normal' | 'reels' | 'manga';
+  type: 'normal' | 'reels' | 'comic';
   creator?: { id: string; name: string; avatarUrl?: string };
   contents: Chapter[];
 }
 
-export default function MangaDetail() {
+export default function ComicDetail() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const [series, setSeries] = useState<MangaDetail | null>(null);
+  const [series, setSeries] = useState<ComicDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function MangaDetail() {
   if (!series) {
     return (
       <div className="text-center py-20">
-        <p className="text-muted">Manga not found.</p>
+        <p className="text-muted">Comic not found.</p>
       </div>
     );
   }
@@ -64,14 +64,14 @@ export default function MangaDetail() {
   return (
     <div>
       <button
-        onClick={() => router.push('/manga')}
+        onClick={() => router.push('/comics')}
         className="text-sm text-muted hover:text-foreground transition-colors mb-4 cursor-pointer flex items-center gap-1"
       >
         <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
-        Back to Manga
+        Back to Comic
       </button>
 
-      {/* Hero: manga-style portrait cover + details */}
+      {/* Hero: comic-style portrait cover + details */}
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-8">
         <div className="w-40 md:w-52 aspect-[2/3] rounded-lg overflow-hidden bg-surface-hover border border-border shrink-0 mx-auto md:mx-0">
           {series.coverUrl ? (
@@ -85,7 +85,7 @@ export default function MangaDetail() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">{series.title}</h1>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-semibold tracking-wide">MANGA</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300 font-semibold tracking-wide">COMIC</span>
           </div>
           {series.creator && (
             <p className="text-sm text-muted mt-1">by {series.creator.name}</p>
@@ -107,7 +107,7 @@ export default function MangaDetail() {
             return (
               <div
                 key={ch.id}
-                onClick={() => canRead ? router.push(`/manga/${series.id}/read/${ch.id}`) : router.push(`/content/${ch.id}`)}
+                onClick={() => canRead ? router.push(`/comics/${series.id}/read/${ch.id}`) : router.push(`/content/${ch.id}`)}
                 className="bg-surface border border-border rounded-lg p-3 md:p-4 flex items-center gap-3 md:gap-4 cursor-pointer hover:border-accent/50 transition-colors group"
               >
                 <div className="w-14 h-20 rounded bg-surface-hover overflow-hidden shrink-0">

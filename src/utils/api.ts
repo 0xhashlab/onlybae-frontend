@@ -97,7 +97,7 @@ export const userApi = {
     if (params?.limit) qs.set('limit', String(params.limit));
     return request<any>(`/api/user/unlocked?${qs}`);
   },
-  browseSeries: (params?: { page?: number; limit?: number; type?: 'normal' | 'reels' | 'manga' }) => {
+  browseSeries: (params?: { page?: number; limit?: number; type?: 'normal' | 'reels' | 'comic' }) => {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
     if (params?.limit) qs.set('limit', String(params.limit));
