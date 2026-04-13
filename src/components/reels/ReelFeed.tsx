@@ -331,54 +331,59 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full overflow-y-scroll overflow-x-hidden bg-black reel-scroll"
-      style={{
-        scrollSnapType: 'y mandatory',
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-        // iOS PWA momentum scroll will otherwise bounce horizontally on any
-        // touch pan, dragging the whole feed off-screen. Limiting touch-action
-        // to vertical makes the feed ignore horizontal gestures entirely.
-        touchAction: 'pan-y',
-        overscrollBehavior: 'contain',
-      }}
-    >
-      <style jsx>{`
-        .reel-scroll::-webkit-scrollbar { display: none; }
-      `}</style>
-      {items.map((item, idx) => (
-        <div
-          key={item.id}
-          ref={setCardRef(idx)}
-          data-index={idx}
-          className="w-full h-full overflow-hidden"
-          style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
-        >
-          <ReelCard
-            item={item}
-            active={idx === activeIndex}
-            distance={Math.abs(idx - activeIndex)}
-            muted={muted}
-            userPaused={userPausedIndex === idx}
-            chromeVisible={chromeVisible}
-            inSeriesMode={!!seriesId}
-            onToggleMute={toggleMute}
-            onTogglePause={togglePauseActive}
-            onChange={updateItem}
-            onVideoError={handleVideoError}
-            onOpenComments={handleOpenComments}
-            onOpenEpisodes={handleOpenEpisodes}
-          />
-        </div>
-      ))}
-      {loadingMore && (
-        <div className="w-full h-16 flex items-center justify-center bg-black">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-        </div>
-      )}
+    <>
+      <div
+        ref={containerRef}
+        className="w-full h-full overflow-y-scroll overflow-x-hidden bg-black reel-scroll"
+        style={{
+          scrollSnapType: 'y mandatory',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          // iOS PWA momentum scroll will otherwise bounce horizontally on any
+          // touch pan, dragging the whole feed off-screen. Limiting touch-action
+          // to vertical makes the feed ignore horizontal gestures entirely.
+          touchAction: 'pan-y',
+          overscrollBehavior: 'contain',
+        }}
+      >
+        <style jsx>{`
+          .reel-scroll::-webkit-scrollbar { display: none; }
+        `}</style>
+        {items.map((item, idx) => (
+          <div
+            key={item.id}
+            ref={setCardRef(idx)}
+            data-index={idx}
+            className="w-full h-full overflow-hidden"
+            style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+          >
+            <ReelCard
+              item={item}
+              active={idx === activeIndex}
+              distance={Math.abs(idx - activeIndex)}
+              muted={muted}
+              userPaused={userPausedIndex === idx}
+              chromeVisible={chromeVisible}
+              inSeriesMode={!!seriesId}
+              onToggleMute={toggleMute}
+              onTogglePause={togglePauseActive}
+              onChange={updateItem}
+              onVideoError={handleVideoError}
+              onOpenComments={handleOpenComments}
+              onOpenEpisodes={handleOpenEpisodes}
+            />
+          </div>
+        ))}
+        {loadingMore && (
+          <div className="w-full h-16 flex items-center justify-center bg-black">
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
 
+      {/* Drawers are siblings of the scroll container, NOT nested inside it.
+          overflow-y-scroll creates a scroll container that can clip fixed-position
+          descendants in some browsers/PWA contexts — placing them outside avoids that. */}
       <CommentsDrawer
         contentId={commentsForId}
         onClose={handleCloseComments}
@@ -391,6 +396,6 @@ export default function ReelFeed({ seriesId, startEpisodeId, chromeVisible = tru
         onClose={handleCloseEpisodes}
         onSelectEpisode={handleSelectEpisode}
       />
-    </div>
+    </>
   );
 }
