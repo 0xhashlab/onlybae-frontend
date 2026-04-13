@@ -45,7 +45,7 @@ export default function VersionBadge({ className = '' }: { className?: string })
       title={copied ? 'Copied!' : 'Click to copy'}
       className={`text-muted hover:text-foreground text-[10px] font-mono tracking-tight transition-colors cursor-pointer ${className}`}
     >
-      {copied ? 'copied!' : `v ${version}`}
+      {copied ? 'copied!' : `v${version}`}
     </button>
   );
 }
