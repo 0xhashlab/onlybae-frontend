@@ -15,6 +15,39 @@ interface PreviewItem {
   orientation?: 'portrait' | 'landscape' | 'square' | null;
 }
 
+function useColumnCount() {
+  const [cols, setCols] = useState(2);
+  useEffect(() => {
+    const update = () => { const w = window.innerWidth; setCols(w >= 1280 ? 5 : w >= 1024 ? 3 : 2); };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return cols;
+}
+
+function MasonryGrid({ items, children }: { items: ContentItem[]; children: (item: ContentItem) => React.ReactNode }) {
+  const cols = useColumnCount();
+  const columns: ContentItem[][] = Array.from({ length: cols }, () => []);
+  const heights = new Array(cols).fill(0);
+  items.forEach((item) => {
+    const shortest = heights.indexOf(Math.min(...heights));
+    columns[shortest].push(item);
+    const p = item.previews[0];
+    const aspect = p?.width && p?.height ? p.height / p.width : p?.orientation === 'landscape' ? 9 / 16 : p?.orientation === 'square' ? 1 : 4 / 3;
+    heights[shortest] += aspect + 0.35;
+  });
+  return (
+    <div className="flex gap-5">
+      {columns.map((col, i) => (
+        <div key={i} className="flex-1 flex flex-col gap-5">
+          {col.map((item) => children(item))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface ContentItem {
   id: string;
   title: string;
@@ -173,13 +206,9 @@ export default function UnlockedPage() {
         </div>
       ) : (
         <>
-          <div className="columns-2 lg:columns-3 xl:columns-5 gap-5">
-            {content.map((item) => (
-              <div key={item.id} className="break-inside-avoid mb-5">
-                <ContentCard item={item} />
-              </div>
-            ))}
-          </div>
+          <MasonryGrid items={content}>
+            {(item) => <ContentCard key={item.id} item={item} />}
+          </MasonryGrid>
           {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} className="h-1" />
           {loadingMore && (

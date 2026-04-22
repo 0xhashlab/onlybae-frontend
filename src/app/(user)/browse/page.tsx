@@ -33,6 +33,50 @@ interface TagItem {
   name: string;
 }
 
+function useColumnCount() {
+  const [cols, setCols] = useState(2);
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      setCols(w >= 1280 ? 5 : w >= 1024 ? 3 : 2);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return cols;
+}
+
+function getPreviewAspect(item: ContentItem): number {
+  const p = item.previews[0];
+  if (p?.width && p?.height) return p.height / p.width;
+  if (p?.orientation === 'landscape') return 9 / 16;
+  if (p?.orientation === 'square') return 1;
+  return 4 / 3; // default portrait
+}
+
+function MasonryGrid({ items, children }: { items: ContentItem[]; children: (item: ContentItem) => React.ReactNode }) {
+  const cols = useColumnCount();
+  const columns: ContentItem[][] = Array.from({ length: cols }, () => []);
+  const heights = new Array(cols).fill(0);
+
+  items.forEach((item) => {
+    const shortest = heights.indexOf(Math.min(...heights));
+    columns[shortest].push(item);
+    heights[shortest] += getPreviewAspect(item) + 0.35; // card info ~35% of width
+  });
+
+  return (
+    <div className="flex gap-5">
+      {columns.map((col, i) => (
+        <div key={i} className="flex-1 flex flex-col gap-5">
+          {col.map((item) => children(item))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function getAspectStyle(p: PreviewItem): React.CSSProperties {
   if (p.width && p.height) return { aspectRatio: `${p.width} / ${p.height}` };
   if (p.orientation === 'landscape') return { aspectRatio: '16 / 9' };
@@ -264,13 +308,9 @@ export default function BrowsePage() {
         </div>
       ) : (
         <>
-          <div className="columns-2 lg:columns-3 xl:columns-5 gap-5">
-            {content.map((item) => (
-              <div key={item.id} className="break-inside-avoid mb-5">
-                <ContentCard item={item} />
-              </div>
-            ))}
-          </div>
+          <MasonryGrid items={content}>
+            {(item) => <ContentCard key={item.id} item={item} />}
+          </MasonryGrid>
           {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} className="h-1" />
           {loadingMore && (
