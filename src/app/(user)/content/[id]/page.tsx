@@ -69,9 +69,9 @@ function GalleryMasonry({ items, onOpenLightbox }: { items: ContentItemData[]; o
     : { aspectRatio: '3 / 4' };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2 md:gap-3 w-full">
       {columns.map((col, ci) => (
-        <div key={ci} className="flex-1 flex flex-col gap-3">
+        <div key={ci} className="flex-1 min-w-0 flex flex-col gap-2 md:gap-3">
           {col.map((item) => (
             <div
               key={item.id}

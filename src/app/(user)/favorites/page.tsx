@@ -38,9 +38,9 @@ function MasonryGrid({ items, children }: { items: ContentItem[]; children: (ite
     heights[shortest] += aspect + 0.35;
   });
   return (
-    <div className="flex gap-5">
+    <div className="flex gap-3 md:gap-5 w-full">
       {columns.map((col, i) => (
-        <div key={i} className="flex-1 flex flex-col gap-5">
+        <div key={i} className="flex-1 min-w-0 flex flex-col gap-3 md:gap-5">
           {col.map((item) => children(item))}
         </div>
       ))}
