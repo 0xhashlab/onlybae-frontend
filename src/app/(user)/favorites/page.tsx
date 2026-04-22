@@ -38,7 +38,6 @@ function getAspectStyle(p: PreviewItem): React.CSSProperties {
 
 function PreviewMedia({ p }: { p: PreviewItem }) {
   if (!p.url) return <div className="w-full h-full bg-surface-hover" />;
-  if (p.type === 'video') return <video src={p.url} muted playsInline preload="metadata" className="w-full h-full object-cover pointer-events-none" />;
   return <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />;
 }
 
