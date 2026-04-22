@@ -8,6 +8,9 @@ interface PreviewItem {
   url: string | null;
   locked: boolean;
   type: string;
+  width?: number | null;
+  height?: number | null;
+  orientation?: 'portrait' | 'landscape' | 'square' | null;
 }
 
 interface ContentItem {
@@ -30,38 +33,51 @@ interface TagItem {
   name: string;
 }
 
-function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
-  if (previews.length === 0) {
-    return <div className="h-52 bg-surface-hover flex items-center justify-center text-muted">No preview</div>;
-  }
+function getAspectStyle(p: PreviewItem): React.CSSProperties {
+  if (p.width && p.height) return { aspectRatio: `${p.width} / ${p.height}` };
+  if (p.orientation === 'landscape') return { aspectRatio: '16 / 9' };
+  if (p.orientation === 'square') return { aspectRatio: '1 / 1' };
+  return { aspectRatio: '3 / 4' }; // default portrait
+}
 
-  const renderItem = (p: PreviewItem, height: string, iconSize: string) => (
-    <div className={`${height} bg-surface-hover relative overflow-hidden`}>
-      {p.url ? (
-        p.type === 'video' ? (
-          <video src={p.url} muted playsInline preload="metadata" className="w-full h-full object-cover pointer-events-none" />
-        ) : (
-          <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-        )
-      ) : (
-        <div className="w-full h-full bg-surface-hover" />
-      )}
-      {p.locked && (
-        <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-          <svg className={`text-white ${iconSize} drop-shadow`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-        </div>
-      )}
+function PreviewMedia({ p }: { p: PreviewItem }) {
+  if (!p.url) return <div className="w-full h-full bg-surface-hover" />;
+  if (p.type === 'video') {
+    return <video src={p.url} muted playsInline preload="metadata" className="w-full h-full object-cover pointer-events-none" />;
+  }
+  return <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />;
+}
+
+function LockOverlay({ iconSize }: { iconSize: string }) {
+  return (
+    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+      <svg className={`text-white ${iconSize} drop-shadow`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
     </div>
   );
+}
 
-  if (previews.length === 1) return renderItem(previews[0], 'h-52', 'w-6 h-6');
+function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
+  if (previews.length === 0) {
+    return <div style={{ aspectRatio: '3 / 4' }} className="bg-surface-hover flex items-center justify-center text-muted">No preview</div>;
+  }
+
+  if (previews.length === 1) {
+    const p = previews[0];
+    return (
+      <div className="bg-surface-hover relative overflow-hidden" style={getAspectStyle(p)}>
+        <PreviewMedia p={p} />
+        {p.locked && <LockOverlay iconSize="w-6 h-6" />}
+      </div>
+    );
+  }
 
   if (previews.length === 2) {
     return (
-      <div className="h-52 flex gap-px overflow-hidden">
+      <div className="flex gap-px overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
         {previews.map((p, i) => (
           <div key={i} className="flex-1 relative overflow-hidden">
-            {renderItem(p, 'h-full', 'w-5 h-5')}
+            <PreviewMedia p={p} />
+            {p.locked && <LockOverlay iconSize="w-5 h-5" />}
           </div>
         ))}
       </div>
@@ -69,10 +85,11 @@ function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
   }
 
   return (
-    <div className="h-52 grid grid-cols-2 grid-rows-2 gap-px overflow-hidden">
+    <div className="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
       {previews.slice(0, 4).map((p, i) => (
         <div key={i} className="relative overflow-hidden">
-          {renderItem(p, 'h-full', 'w-4 h-4')}
+          <PreviewMedia p={p} />
+          {p.locked && <LockOverlay iconSize="w-4 h-4" />}
         </div>
       ))}
     </div>
@@ -250,9 +267,11 @@ export default function BrowsePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+          <div className="columns-2 lg:columns-3 xl:columns-5 gap-5">
             {content.map((item) => (
-              <ContentCard key={item.id} item={item} />
+              <div key={item.id} className="break-inside-avoid mb-5">
+                <ContentCard item={item} />
+              </div>
             ))}
           </div>
           {/* Infinite scroll sentinel */}

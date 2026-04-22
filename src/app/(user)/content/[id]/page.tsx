@@ -604,47 +604,59 @@ export default function ContentDetailPage() {
       <h2 className="text-lg font-semibold text-foreground mb-4">
         {isLocked ? 'Preview' : 'Content'}
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className={`aspect-square rounded-xl overflow-hidden bg-surface-hover relative ${
-              !item.locked && item.url ? 'cursor-pointer hover:ring-2 hover:ring-accent/50 transition-all' : ''
-            }`}
-            onClick={() => !item.locked && item.url && openLightbox(item.id)}
-          >
-            {item.locked ? (
-              <>
-                {item.url ? (
-                  <img src={item.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-surface-hover" />
-                )}
-                <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-                </div>
-              </>
-            ) : (
-              item.type === 'image' ? (
+      <div className="columns-2 sm:columns-3 md:columns-4 gap-3">
+        {items.map((item) => {
+          const aspectStyle: React.CSSProperties = item.width && item.height
+            ? { aspectRatio: `${item.width} / ${item.height}` }
+            : item.orientation === 'landscape' ? { aspectRatio: '16 / 9' }
+            : item.orientation === 'square' ? { aspectRatio: '1 / 1' }
+            : { aspectRatio: '3 / 4' };
+          return (
+            <div
+              key={item.id}
+              className={`break-inside-avoid mb-3 rounded-xl overflow-hidden bg-surface-hover relative ${
+                !item.locked && item.url ? 'cursor-pointer hover:ring-2 hover:ring-accent/50 transition-all' : ''
+              }`}
+              style={aspectStyle}
+              onClick={() => !item.locked && item.url && openLightbox(item.id)}
+            >
+              {item.locked ? (
                 <>
-                  <img src={item.url!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                    <svg className="w-6 h-6 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-                    </svg>
+                  {item.url ? (
+                    item.type === 'video' ? (
+                      <video src={item.url} muted playsInline preload="metadata" className="w-full h-full object-cover pointer-events-none" />
+                    ) : (
+                      <img src={item.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                    )
+                  ) : (
+                    <div className="w-full h-full bg-surface-hover" />
+                  )}
+                  <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
                   </div>
                 </>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-black relative">
-                  <video src={item.url!} className="w-full h-full object-cover" muted playsInline />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <svg className="w-10 h-10 text-white/80 drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                item.type === 'image' ? (
+                  <>
+                    <img src={item.url!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                      <svg className="w-6 h-6 text-white drop-shadow" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                      </svg>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-black relative">
+                    <video src={item.url!} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <svg className="w-10 h-10 text-white/80 drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                    </div>
                   </div>
-                </div>
-              )
-            )}
-          </div>
-        ))}
+                )
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Comments */}

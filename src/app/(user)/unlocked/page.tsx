@@ -10,6 +10,9 @@ interface PreviewItem {
   url: string | null;
   locked: boolean;
   type: string;
+  width?: number | null;
+  height?: number | null;
+  orientation?: 'portrait' | 'landscape' | 'square' | null;
 }
 
 interface ContentItem {
@@ -28,46 +31,35 @@ interface ContentItem {
   creator: { id: string; name: string; avatarUrl?: string };
 }
 
+function getAspectStyle(p: PreviewItem): React.CSSProperties {
+  if (p.width && p.height) return { aspectRatio: `${p.width} / ${p.height}` };
+  if (p.orientation === 'landscape') return { aspectRatio: '16 / 9' };
+  if (p.orientation === 'square') return { aspectRatio: '1 / 1' };
+  return { aspectRatio: '3 / 4' };
+}
+
+function PreviewMedia({ p }: { p: PreviewItem }) {
+  if (!p.url) return <div className="w-full h-full bg-surface-hover" />;
+  if (p.type === 'video') return <video src={p.url} muted playsInline preload="metadata" className="w-full h-full object-cover pointer-events-none" />;
+  return <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />;
+}
+
 function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
-  if (previews.length === 0) {
-    return <div className="h-52 bg-surface-hover flex items-center justify-center text-muted">No preview</div>;
+  if (previews.length === 0) return <div style={{ aspectRatio: '3 / 4' }} className="bg-surface-hover flex items-center justify-center text-muted">No preview</div>;
+  if (previews.length === 1) {
+    const p = previews[0];
+    return <div className="bg-surface-hover relative overflow-hidden" style={getAspectStyle(p)}><PreviewMedia p={p} /></div>;
   }
-
-  const renderItem = (p: PreviewItem, height: string) => (
-    <div className={`${height} bg-surface-hover relative overflow-hidden`}>
-      {p.url ? (
-        p.type === 'video' ? (
-          <video src={p.url} muted playsInline preload="metadata" className="w-full h-full object-cover pointer-events-none" />
-        ) : (
-          <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-        )
-      ) : (
-        <div className="w-full h-full bg-surface-hover" />
-      )}
-    </div>
-  );
-
-  if (previews.length === 1) return renderItem(previews[0], 'h-52');
-
   if (previews.length === 2) {
     return (
-      <div className="h-52 flex gap-px overflow-hidden">
-        {previews.map((p, i) => (
-          <div key={i} className="flex-1 relative overflow-hidden">
-            {renderItem(p, 'h-full')}
-          </div>
-        ))}
+      <div className="flex gap-px overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
+        {previews.map((p, i) => <div key={i} className="flex-1 relative overflow-hidden"><PreviewMedia p={p} /></div>)}
       </div>
     );
   }
-
   return (
-    <div className="h-52 grid grid-cols-2 grid-rows-2 gap-px overflow-hidden">
-      {previews.slice(0, 4).map((p, i) => (
-        <div key={i} className="relative overflow-hidden">
-          {renderItem(p, 'h-full')}
-        </div>
-      ))}
+    <div className="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
+      {previews.slice(0, 4).map((p, i) => <div key={i} className="relative overflow-hidden"><PreviewMedia p={p} /></div>)}
     </div>
   );
 }
@@ -182,9 +174,11 @@ export default function UnlockedPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+          <div className="columns-2 lg:columns-3 xl:columns-5 gap-5">
             {content.map((item) => (
-              <ContentCard key={item.id} item={item} />
+              <div key={item.id} className="break-inside-avoid mb-5">
+                <ContentCard item={item} />
+              </div>
             ))}
           </div>
           {/* Infinite scroll sentinel */}
