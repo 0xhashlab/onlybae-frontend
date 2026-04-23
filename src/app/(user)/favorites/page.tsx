@@ -34,8 +34,9 @@ function MasonryGrid({ items, children }: { items: ContentItem[]; children: (ite
     const shortest = heights.indexOf(Math.min(...heights));
     columns[shortest].push(item);
     const p = item.previews[0];
-    const aspect = p?.width && p?.height ? p.height / p.width : p?.orientation === 'landscape' ? 9 / 16 : p?.orientation === 'square' ? 1 : 4 / 3;
-    heights[shortest] += aspect + 0.35;
+    const cnt = item.previews.length;
+    const r = p?.width && p?.height ? p.height / p.width : p?.orientation === 'landscape' ? 9 / 16 : p?.orientation === 'square' ? 1 : 4 / 3;
+    heights[shortest] += (cnt >= 4 ? r : cnt === 2 ? r / 2 : r) + 0.35;
   });
   return (
     <div className="flex gap-3 md:gap-5 w-full">
@@ -89,14 +90,18 @@ function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
     return <div className="bg-surface-hover relative overflow-hidden" style={getAspectStyle(p)}><PreviewMedia p={p} />{p.locked && <LockOverlay iconSize="w-6 h-6" />}</div>;
   }
   if (previews.length === 2) {
+    const p = previews[0];
+    const dualAspect = p.width && p.height ? { aspectRatio: `${p.width * 2} / ${p.height}` } : { aspectRatio: '4 / 3' };
     return (
-      <div className="flex gap-px overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
+      <div className="flex gap-px overflow-hidden" style={dualAspect}>
         {previews.map((p, i) => <div key={i} className="flex-1 relative overflow-hidden"><PreviewMedia p={p} />{p.locked && <LockOverlay iconSize="w-5 h-5" />}</div>)}
       </div>
     );
   }
+  const p0 = previews[0];
+  const quadAspect = p0.width && p0.height ? { aspectRatio: `${p0.width} / ${p0.height}` } : { aspectRatio: '1 / 1' };
   return (
-    <div className="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
+    <div className="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden" style={quadAspect}>
       {previews.slice(0, 4).map((p, i) => <div key={i} className="relative overflow-hidden"><PreviewMedia p={p} />{p.locked && <LockOverlay iconSize="w-4 h-4" />}</div>)}
     </div>
   );

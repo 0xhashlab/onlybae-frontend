@@ -49,10 +49,16 @@ function useColumnCount() {
 
 function getPreviewAspect(item: ContentItem): number {
   const p = item.previews[0];
-  if (p?.width && p?.height) return p.height / p.width;
-  if (p?.orientation === 'landscape') return 9 / 16;
-  if (p?.orientation === 'square') return 1;
-  return 4 / 3; // default portrait
+  const cnt = item.previews.length;
+  if (p?.width && p?.height) {
+    const r = p.height / p.width; // height-to-width ratio of one image
+    if (cnt >= 4) return r;        // 2x2 grid: same aspect as single
+    if (cnt === 2) return r / 2;   // side by side: half the height ratio
+    return r;                       // single
+  }
+  if (p?.orientation === 'landscape') return cnt === 2 ? 9 / 32 : 9 / 16;
+  if (p?.orientation === 'square') return cnt === 2 ? 0.5 : 1;
+  return cnt === 2 ? 2 / 3 : 4 / 3; // default portrait
 }
 
 function MasonryGrid({ items, children }: { items: ContentItem[]; children: (item: ContentItem) => React.ReactNode }) {
@@ -113,8 +119,13 @@ function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
   }
 
   if (previews.length === 2) {
+    // Two images side by side: combined width / shared height
+    const p = previews[0];
+    const dualAspect = p.width && p.height
+      ? { aspectRatio: `${p.width * 2} / ${p.height}` }
+      : { aspectRatio: '4 / 3' };
     return (
-      <div className="flex gap-px overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
+      <div className="flex gap-px overflow-hidden" style={dualAspect}>
         {previews.map((p, i) => (
           <div key={i} className="flex-1 relative overflow-hidden">
             <PreviewMedia p={p} />
@@ -125,8 +136,13 @@ function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
     );
   }
 
+  // 4 images in 2x2 grid: same aspect as a single image
+  const p0 = previews[0];
+  const quadAspect = p0.width && p0.height
+    ? { aspectRatio: `${p0.width} / ${p0.height}` }
+    : { aspectRatio: '1 / 1' };
   return (
-    <div className="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
+    <div className="grid grid-cols-2 grid-rows-2 gap-px overflow-hidden" style={quadAspect}>
       {previews.slice(0, 4).map((p, i) => (
         <div key={i} className="relative overflow-hidden">
           <PreviewMedia p={p} />
