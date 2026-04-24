@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGrip, faUser, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen } from '@fortawesome/free-solid-svg-icons';
+import { faGrip, faUser, faBook, faHeart, faLockOpen, faRightFromBracket, faRightToBracket, faVideo, faBars, faXmark, faBookOpen, faWallet } from '@fortawesome/free-solid-svg-icons';
 import AgeGate from '@/components/AgeGate';
 import VersionBadge from '@/components/VersionBadge';
 import EdgeSwipeBack, { OPEN_DRAWER_EVENT } from '@/components/EdgeSwipeBack';
@@ -20,6 +20,7 @@ const publicMenuItems: MenuItem[] = [
 ];
 
 const authMenuItems: MenuItem[] = [
+  { key: '/wallet', icon: <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />, label: 'Top Up', authOnly: true },
   { key: '/unlocked', icon: <FontAwesomeIcon icon={faLockOpen} className="w-4 h-4" />, label: 'Unlocked', authOnly: true },
   { key: '/favorites', icon: <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />, label: 'Favorites', authOnly: true },
   { key: '/profile', icon: <FontAwesomeIcon icon={faUser} className="w-4 h-4" />, label: 'Me', authOnly: true },

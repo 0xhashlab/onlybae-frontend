@@ -63,8 +63,25 @@ export const userApi = {
     request(`/api/user/content/${id}/unlock`, { method: 'POST' }),
 
   getBalance: () => request('/api/user/balance'),
-  topUp: (amount: number) =>
-    request('/api/user/topup', { method: 'POST', body: JSON.stringify({ amount }) }),
+
+  createTopup: (amountUsd: number) =>
+    request<{ checkoutUrl: string; orderId: string; amountCoins: string; tokensAwarded: number }>(
+      '/api/user/topup/create',
+      { method: 'POST', body: JSON.stringify({ amountUsd }) }
+    ),
+
+  listTopupOrders: () =>
+    request<{
+      items: { id: string; amountCents: number; amountCoins: string | null; tokensAwarded: number; coinSymbol: string | null; chainId: string | null; txHash: string | null; status: string; createdAt: string }[];
+      tokensPerUsd: number;
+      minDepositUsd: number;
+      stableCoin: string;
+    }>('/api/user/topup/orders'),
+
+  getTopupOrder: (id: string) =>
+    request<{ id: string; amountCents: number; amountCoins: string | null; tokensAwarded: number; coinSymbol: string | null; status: string; createdAt: string }>(
+      `/api/user/topup/orders/${id}`
+    ),
 
   getTransactions: (params: { page?: number; limit?: number } = {}) => {
     const qs = new URLSearchParams();
