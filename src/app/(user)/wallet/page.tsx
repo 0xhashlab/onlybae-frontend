@@ -56,7 +56,7 @@ export default function WalletPage() {
   const load = useCallback(async () => {
     try {
       const res = await userApi.listTopupOrders();
-      setInfo(res.data);
+      setInfo(res.data as unknown as OrdersResponse);
     } catch (e) {
       setError((e as Error).message);
     } finally {

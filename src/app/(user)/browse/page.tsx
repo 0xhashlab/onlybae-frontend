@@ -321,6 +321,7 @@ export default function BrowsePage() {
                 {tag.name}
               </button>
             ))}
+          </div>
         </div>
       )}
 
