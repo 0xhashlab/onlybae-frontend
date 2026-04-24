@@ -83,6 +83,17 @@ export const userApi = {
       `/api/user/topup/orders/${id}`
     ),
 
+  getMembershipPlans: () =>
+    request<{ plans: { key: string; label: string; priceCents: number; durationDays: number | null }[] }>(
+      '/api/user/membership/plans'
+    ),
+
+  subscribeMembership: (plan: 'yearly' | 'lifetime') =>
+    request<{ checkoutUrl: string; orderId: string; plan: string }>(
+      '/api/user/membership/subscribe',
+      { method: 'POST', body: JSON.stringify({ plan }) }
+    ),
+
   getTransactions: (params: { page?: number; limit?: number } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));

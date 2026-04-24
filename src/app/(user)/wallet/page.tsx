@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCoins, faCircleCheck, faCircleXmark, faClock, faArrowRight,
+  faCrown, faInfinity, faCalendar,
 } from '@fortawesome/free-solid-svg-icons';
 
 type OrderStatus = 'pending' | 'completed' | 'failed';
@@ -30,6 +31,13 @@ interface OrdersResponse {
   stableCoin: string;
 }
 
+interface MembershipPlan {
+  key: string;
+  label: string;
+  priceCents: number;
+  durationDays: number | null;
+}
+
 const PRESETS = [5, 10, 25, 50, 100, 200];
 
 const STATUS_META: Record<OrderStatus, { icon: typeof faCircleCheck; color: string; bg: string; label: string }> = {
@@ -44,10 +52,12 @@ export default function WalletPage() {
   const { user, refreshUser } = useAuth();
 
   const [info, setInfo] = useState<OrdersResponse | null>(null);
+  const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUsd, setSelectedUsd] = useState<number>(10);
   const [customUsd, setCustomUsd] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+  const [subscribingPlan, setSubscribingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const returnedOrderId = searchParams.get('order_id');
@@ -55,8 +65,12 @@ export default function WalletPage() {
 
   const load = useCallback(async () => {
     try {
-      const res = await userApi.listTopupOrders();
-      setInfo(res.data as unknown as OrdersResponse);
+      const [orders, plansRes] = await Promise.all([
+        userApi.listTopupOrders(),
+        userApi.getMembershipPlans(),
+      ]);
+      setInfo(orders.data as unknown as OrdersResponse);
+      setPlans(plansRes.data.plans);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -66,8 +80,7 @@ export default function WalletPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // If user returned from AllScale with ?order_id=..., poll the order until
-  // completed or 60 seconds elapse.
+  // Poll order status when returning from AllScale
   useEffect(() => {
     if (!returnedOrderId) return;
     let elapsed = 0;
@@ -79,7 +92,6 @@ export default function WalletPage() {
           refreshUser();
           load();
           clearInterval(pollRef.current!);
-          // Clean the query string so refresh doesn't re-poll
           router.replace('/wallet');
         } else if (res.data.status === 'failed' || elapsed >= 60) {
           load();
@@ -109,6 +121,25 @@ export default function WalletPage() {
     }
   };
 
+  const handleSubscribe = async (plan: 'yearly' | 'lifetime') => {
+    setSubscribingPlan(plan);
+    setError(null);
+    try {
+      const res = await userApi.subscribeMembership(plan);
+      window.location.href = res.data.checkoutUrl;
+    } catch (e) {
+      setError((e as Error).message || 'Failed to start subscription');
+      setSubscribingPlan(null);
+    }
+  };
+
+  // VIP status summary
+  const vipLevel = (user as { membershipLevel?: string } | undefined)?.membershipLevel;
+  const vipExpiresAtRaw = (user as { membershipExpiresAt?: string | null } | undefined)?.membershipExpiresAt;
+  const vipExpiresAt = vipExpiresAtRaw ? new Date(vipExpiresAtRaw) : null;
+  const vipActive = vipLevel === 'vip' && (!vipExpiresAt || vipExpiresAt > new Date());
+  const isLifetime = vipActive && !vipExpiresAt;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -117,20 +148,31 @@ export default function WalletPage() {
     );
   }
 
+  const yearlyPlan = plans.find((p) => p.key === 'yearly');
+  const lifetimePlan = plans.find((p) => p.key === 'lifetime');
+
   return (
     <div className="max-w-xl mx-auto py-6 space-y-4">
-      <h1 className="text-2xl font-bold text-foreground">Top Up Tokens</h1>
+      <h1 className="text-2xl font-bold text-foreground">Wallet</h1>
 
-      {/* Balance */}
+      {/* Balance + VIP */}
       <div className="bg-surface rounded-2xl border border-border p-5 flex items-center justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm text-muted">Current Balance</p>
           <p className="text-3xl font-bold text-foreground mt-0.5">
             {(user?.tokenBalance ?? 0).toLocaleString()}
             <span className="text-base font-normal text-muted ml-1.5">tokens</span>
           </p>
+          {vipActive && (
+            <div className="flex items-center gap-1.5 mt-2 text-xs">
+              <FontAwesomeIcon icon={faCrown} className="w-3 h-3 text-purple-400" />
+              <span className="text-purple-400 font-semibold">
+                {isLifetime ? 'Lifetime VIP' : `VIP until ${vipExpiresAt!.toLocaleDateString()}`}
+              </span>
+            </div>
+          )}
         </div>
-        <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
           <FontAwesomeIcon icon={faCoins} className="w-5 h-5 text-accent" />
         </div>
       </div>
@@ -139,20 +181,78 @@ export default function WalletPage() {
       {returnedOrderId && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-400 flex items-center gap-2">
           <FontAwesomeIcon icon={faClock} className="w-4 h-4 animate-pulse" />
-          Confirming your payment on-chain… tokens will arrive within a minute.
+          Confirming your payment on-chain… it will update within a minute.
         </div>
       )}
 
-      {/* Rate */}
-      <div className="bg-accent/5 border border-accent/20 rounded-xl px-4 py-3 text-sm">
-        <span className="font-semibold text-accent">$1.00 USDT</span>
-        {' = '}
-        <span className="font-semibold text-foreground">{tokensPerUsd} tokens</span>
-        <span className="text-muted ml-2">· Min. ${minUsd.toFixed(2)}</span>
-      </div>
+      {error && (
+        <p className="text-red-400 text-xs bg-red-500/5 border border-red-500/20 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
 
-      {/* Amount selection */}
+      {/* ── Membership ── */}
+      {!isLifetime && (yearlyPlan || lifetimePlan) && (
+        <div className="bg-surface rounded-2xl border border-border p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faCrown} className="w-4 h-4 text-purple-400" />
+            <h2 className="text-base font-semibold text-foreground">VIP Membership</h2>
+          </div>
+          <p className="text-xs text-muted">Unlock all content — every post, every series, no tokens needed.</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            {yearlyPlan && (
+              <button
+                type="button"
+                onClick={() => handleSubscribe('yearly')}
+                disabled={!!subscribingPlan}
+                className="group relative text-left bg-surface-hover hover:bg-surface-hover/70 border border-border hover:border-purple-500/40 rounded-xl p-4 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <div className="flex items-center gap-1.5 mb-2">
+                  <FontAwesomeIcon icon={faCalendar} className="w-3 h-3 text-purple-400" />
+                  <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Yearly</span>
+                </div>
+                <p className="text-2xl font-bold text-foreground">${(yearlyPlan.priceCents / 100).toFixed(0)}</p>
+                <p className="text-xs text-muted mt-0.5">365 days of full access</p>
+                <span className="absolute bottom-3 right-3 text-purple-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                  {subscribingPlan === 'yearly' ? '…' : '→'}
+                </span>
+              </button>
+            )}
+            {lifetimePlan && (
+              <button
+                type="button"
+                onClick={() => handleSubscribe('lifetime')}
+                disabled={!!subscribingPlan}
+                className="group relative text-left bg-gradient-to-br from-purple-500/10 to-amber-500/10 hover:from-purple-500/20 hover:to-amber-500/20 border border-purple-500/40 rounded-xl p-4 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <div className="absolute top-2.5 right-2.5 bg-amber-500 text-black text-[9px] px-1.5 py-0.5 rounded font-bold">
+                  BEST VALUE
+                </div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <FontAwesomeIcon icon={faInfinity} className="w-3 h-3 text-amber-400" />
+                  <span className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Lifetime</span>
+                </div>
+                <p className="text-2xl font-bold text-foreground">${(lifetimePlan.priceCents / 100).toFixed(0)}</p>
+                <p className="text-xs text-muted mt-0.5">Forever VIP · pay once</p>
+                <span className="absolute bottom-3 right-3 text-amber-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                  {subscribingPlan === 'lifetime' ? '…' : '→'}
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Token Top-up ── */}
       <div className="bg-surface rounded-2xl border border-border p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground">Top Up Tokens</h2>
+          <span className="text-xs text-muted">
+            <span className="text-accent font-semibold">$1</span> = {tokensPerUsd} tokens
+          </span>
+        </div>
+
         <div>
           <p className="text-xs text-muted uppercase tracking-wide font-semibold mb-2">Choose amount</p>
           <div className="grid grid-cols-3 gap-2">
@@ -187,7 +287,6 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* Preview */}
         <div className="bg-surface-hover rounded-lg px-4 py-3 flex items-center justify-between">
           <span className="text-sm text-muted">You will receive</span>
           <span className="text-lg font-bold text-accent">
@@ -195,12 +294,6 @@ export default function WalletPage() {
             <span className="text-sm font-normal text-muted ml-1">tokens</span>
           </span>
         </div>
-
-        {error && (
-          <p className="text-red-400 text-xs bg-red-500/5 border border-red-500/20 rounded-lg px-3 py-2">
-            {error}
-          </p>
-        )}
 
         <button type="button" onClick={handlePay} disabled={submitting || !amountValid}
           className="w-full h-12 rounded-xl bg-accent text-black font-semibold text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity">
@@ -211,18 +304,18 @@ export default function WalletPage() {
           )}
         </button>
         <p className="text-xs text-muted/70 text-center">
-          Secure checkout by AllScale — pay with any crypto wallet (MetaMask, Trust Wallet, etc.)
+          Secure checkout by AllScale — pay with any crypto wallet.
         </p>
       </div>
 
-      {/* Order history */}
+      {/* ── Order history ── */}
       <div className="bg-surface rounded-2xl border border-border overflow-hidden">
         <div className="px-5 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground text-sm">Recent Top-Ups</h3>
+          <h3 className="font-semibold text-foreground text-sm">Recent Orders</h3>
         </div>
         {!info?.items.length ? (
           <div className="px-5 py-10 text-center">
-            <p className="text-muted text-sm">No top-ups yet.</p>
+            <p className="text-muted text-sm">No orders yet.</p>
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -236,7 +329,9 @@ export default function WalletPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-foreground">
-                        {o.status === 'completed' ? '+' : ''}{o.tokensAwarded.toLocaleString()} tokens
+                        {o.tokensAwarded > 0
+                          ? `${o.status === 'completed' ? '+' : ''}${o.tokensAwarded.toLocaleString()} tokens`
+                          : 'VIP Membership'}
                       </span>
                       <span className="text-xs text-muted">
                         ${(o.amountCents / 100).toFixed(2)} {o.coinSymbol || 'USDT'}
