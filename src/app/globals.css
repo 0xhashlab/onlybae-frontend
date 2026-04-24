@@ -46,3 +46,12 @@ body {
     padding-bottom: 2rem;
   }
 }
+
+/* Hide scrollbar for horizontal scroll strips (tag chips, tabs, etc.) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

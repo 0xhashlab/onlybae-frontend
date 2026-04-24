@@ -2,9 +2,12 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { userApi } from '@/utils/api';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AddToHomeScreenButton from '@/components/AddToHomeScreenButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWallet, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 const membershipStyles: Record<string, string> = {
   free: 'bg-zinc-500/10 text-zinc-400',
@@ -21,16 +24,9 @@ interface Transaction {
   createdAt: string;
 }
 
-// TODO: These are placeholder amounts - finalize pricing later
-const topUpOptions = [
-  { tokens: 50, price: '$4.99' },
-  { tokens: 100, price: '$8.99' },
-  { tokens: 250, price: '$19.99' },
-  { tokens: 500, price: '$34.99' },
-];
-
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
+  const router = useRouter();
 
   // Editable account fields
   const [editing, setEditing] = useState(false);
@@ -39,13 +35,11 @@ export default function ProfilePage() {
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
 
-  // Wallet state
+  // Wallet state — balance + recent transactions (top-up happens on /wallet)
   const [balance, setBalance] = useState<number>(user?.tokenBalance || 0);
   const [membership, setMembership] = useState<string>(user?.membershipLevel || 'free');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [walletLoading, setWalletLoading] = useState(true);
-  const [walletMessage, setWalletMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [customAmount, setCustomAmount] = useState<number>(10);
 
   const fetchWallet = useCallback(async () => {
     setWalletLoading(true);
@@ -86,21 +80,6 @@ export default function ProfilePage() {
       setProfileError('Failed to update profile');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleTopUp = async (amount: number) => {
-    setWalletMessage(null);
-    try {
-      const res = await userApi.topUp(amount);
-      const data = res.data as { newBalance: number };
-      setBalance(data.newBalance);
-      setWalletMessage({ type: 'success', text: `Top-up successful! +${amount} tokens` });
-      fetchWallet();
-      refreshUser?.();
-    } catch (err: unknown) {
-      const error = err as Error;
-      setWalletMessage({ type: 'error', text: error.message || 'Top-up failed' });
     }
   };
 
@@ -213,50 +192,22 @@ export default function ProfilePage() {
         </div>
       ) : (
         <>
-          {walletMessage && (
-            <div className={`mb-4 rounded-lg px-4 py-3 border ${
-              walletMessage.type === 'success'
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                : 'bg-red-500/10 border-red-500/20 text-red-400'
-            }`}>
-              <p className="text-sm">{walletMessage.text}</p>
+          {/* Top Up entry — actual payment flow lives on /wallet */}
+          <button
+            onClick={() => router.push('/wallet')}
+            className="w-full bg-surface border border-border rounded-xl p-4 md:p-5 mb-6 flex items-center justify-between hover:border-accent transition-colors cursor-pointer group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-full bg-accent/10 flex items-center justify-center">
+                <FontAwesomeIcon icon={faWallet} className="w-5 h-5 text-accent" />
+              </div>
+              <div className="text-left">
+                <p className="text-base font-semibold text-foreground group-hover:text-accent transition-colors">Top Up Tokens</p>
+                <p className="text-xs text-muted mt-0.5">Pay with USDT via AllScale</p>
+              </div>
             </div>
-          )}
-
-          {/* Top Up */}
-          <div className="bg-surface border border-border rounded-xl p-4 md:p-6 mb-6">
-            <h3 className="text-base font-semibold text-foreground mb-4">Top Up Tokens</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-              {topUpOptions.map((opt) => (
-                <button
-                  key={opt.tokens}
-                  onClick={() => handleTopUp(opt.tokens)}
-                  className="flex flex-col items-center gap-1 p-3 md:p-4 rounded-xl border border-border bg-background hover:border-accent hover:shadow-sm transition-all duration-200 cursor-pointer group"
-                >
-                  <span className="text-xl md:text-2xl font-semibold text-foreground group-hover:text-accent transition-colors">{opt.tokens}</span>
-                  <span className="text-xs text-muted">tokens</span>
-                  <span className="text-sm font-medium text-foreground mt-1">{opt.price}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-3 pt-4 border-t border-border">
-              <span className="text-sm text-muted">Custom:</span>
-              <input
-                type="number"
-                min={1}
-                value={customAmount}
-                onChange={(e) => setCustomAmount(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-24 h-10 px-3 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
-              />
-              <button
-                onClick={() => handleTopUp(customAmount)}
-                className="h-10 px-5 rounded-lg bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors cursor-pointer"
-              >
-                Top Up
-              </button>
-            </div>
-          </div>
+            <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4 text-muted group-hover:text-accent transition-colors" />
+          </button>
 
           {/* Transaction History */}
           <div className="bg-surface border border-border rounded-xl overflow-hidden">

@@ -298,20 +298,29 @@ export default function BrowsePage() {
       </div>
 
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => handleTagClick(tag.name)}
-              className={`px-3 py-1 text-xs rounded-full border transition-colors duration-150 cursor-pointer ${
-                activeTag === tag.name
-                  ? 'bg-accent text-background border-accent'
-                  : 'bg-surface border-border text-muted hover:text-foreground hover:border-foreground/30'
-              }`}
-            >
-              {tag.name}
-            </button>
-          ))}
+        <div className="relative -mx-4 md:mx-0 mb-6">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 md:px-0 py-0.5 snap-x">
+            {activeTag && (
+              <button
+                onClick={() => setActiveTag(null)}
+                className="shrink-0 snap-start px-3 py-1 text-xs rounded-full border border-border bg-surface text-muted hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer"
+              >
+                × Clear
+              </button>
+            )}
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => handleTagClick(tag.name)}
+                className={`shrink-0 snap-start px-3 py-1 text-xs rounded-full border transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+                  activeTag === tag.name
+                    ? 'bg-accent text-background border-accent'
+                    : 'bg-surface border-border text-muted hover:text-foreground hover:border-foreground/30'
+                }`}
+              >
+                {tag.name}
+              </button>
+            ))}
         </div>
       )}
 
