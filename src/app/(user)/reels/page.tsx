@@ -15,8 +15,9 @@ import { faArrowLeft, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icon
 //   ?start=Y      Start playback at episode Y (auto-scroll when the feed loads).
 //
 // Desktop: sits to the right of the 14rem sidebar, full height.
-// Mobile:  sits between the top bar (3.5rem + Dynamic Island / notch safe area)
-//          and the bottom tab bar (4rem + iOS home-indicator safe area).
+// Mobile:  sits between the top bar (--user-top-bar + safe-area-top) and the
+//          bottom tab bar (--user-bottom-bar + safe-area-bottom). Both values
+//          live in globals.css so this stays aligned with layout.tsx.
 function ReelsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -33,8 +34,8 @@ function ReelsPageInner() {
     <div className="reels-shell fixed left-0 md:left-56 right-0 bg-black overflow-hidden">
       <style jsx>{`
         .reels-shell {
-          top: calc(3.5rem + env(safe-area-inset-top));
-          bottom: calc(4rem + env(safe-area-inset-bottom));
+          top: calc(var(--user-top-bar) + env(safe-area-inset-top));
+          bottom: calc(var(--user-bottom-bar) + env(safe-area-inset-bottom));
         }
         @media (min-width: 768px) {
           .reels-shell {

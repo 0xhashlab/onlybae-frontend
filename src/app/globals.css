@@ -14,6 +14,15 @@
   --font-sans: 'Inter', sans-serif;
 }
 
+/* Mobile chrome dimensions — referenced by user layout, reels shell, and
+   any full-screen pages that need to align with the bottom tab bar.
+   Keeping these in one place prevents the fixed reels-shell from leaving
+   a black gap between its bottom edge and the nav bar's top edge. */
+:root {
+  --user-top-bar: 3.5rem;
+  --user-bottom-bar: 3.25rem;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);
@@ -32,13 +41,13 @@ body {
 
 /*
   User layout main-content padding.
-  Mobile: clear the fixed top bar (3.5rem) + Dynamic Island / notch safe-area,
-          and the fixed bottom tab bar (4rem) + iOS home-indicator safe-area.
+  Mobile: clear the fixed top bar + safe-area-top, and the fixed bottom
+          tab bar + safe-area-bottom (with a small breathing buffer).
   Desktop (md+): no top/bottom bars, fall back to p-8.
 */
 .user-main {
-  padding-top: calc(env(safe-area-inset-top) + 4.5rem);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+  padding-top: calc(env(safe-area-inset-top) + var(--user-top-bar) + 1rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--user-bottom-bar) + 1rem);
 }
 @media (min-width: 768px) {
   .user-main {

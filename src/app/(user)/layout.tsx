@@ -163,15 +163,15 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       </aside>
 
       {/*
-        Mobile top bar.
-        paddingTop = env(safe-area-inset-top) pushes the content below Dynamic Island / notch.
-        height grows to 3.5rem + safe-area so the visible content area is always 3.5rem tall.
+        Mobile top bar — height = --user-top-bar + safe-area-inset-top, so the
+        visible content area is always exactly --user-top-bar tall regardless
+        of the notch / Dynamic Island.
       */}
       <header
         className="md:hidden fixed top-0 inset-x-0 z-30 bg-surface/95 backdrop-blur border-b border-border flex items-center px-3 gap-3"
         style={{
           paddingTop: 'env(safe-area-inset-top)',
-          height: 'calc(3.5rem + env(safe-area-inset-top))',
+          height: 'calc(var(--user-top-bar) + env(safe-area-inset-top))',
         }}
       >
         <button
@@ -225,18 +225,23 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       )}
 
       {/*
-        Main content. On mobile the top padding clears the fixed header
-        (3.5rem) plus the Dynamic Island / notch safe area, and the bottom
-        padding clears the tab bar (4rem) plus iOS home indicator.
+        Main content. On mobile, top padding clears the fixed header (top-bar
+        + safe-area-top) and bottom padding clears the tab bar (bottom-bar
+        + safe-area-bottom). See .user-main in globals.css.
       */}
       <main className="user-main flex-1 md:ml-56 px-4 md:p-8">
         {children}
       </main>
 
-      {/* Mobile bottom tab bar */}
+      {/* Mobile bottom tab bar — height pinned to --user-bottom-bar so the
+          reels-shell and any other full-screen page can align without leaving
+          a gap of body background between content and nav. */}
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur border-t border-border flex items-stretch"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        style={{
+          height: 'calc(var(--user-bottom-bar) + env(safe-area-inset-bottom))',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
       >
         {visibleTabs.map(tab => {
           const active = pathname === tab.key;
