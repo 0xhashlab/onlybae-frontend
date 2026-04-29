@@ -59,7 +59,14 @@ interface ContentItem {
   favoriteCount: number;
   totalItems: number;
   previews: PreviewItem[];
+  series?: { id: string; type?: 'normal' | 'reels' | 'comic' } | null;
   creator: { id: string; name: string; avatarUrl?: string };
+}
+
+function targetUrlFor(item: ContentItem) {
+  if (item.series?.type === 'reels') return `/reels?seriesId=${item.series.id}&start=${item.id}`;
+  if (item.series?.type === 'comic') return `/comics/${item.series.id}/read/${item.id}`;
+  return `/content/${item.id}`;
 }
 
 interface CreatorProfile {
@@ -79,6 +86,17 @@ function getAspectStyle(p: PreviewItem): React.CSSProperties {
 
 function PreviewMedia({ p }: { p: PreviewItem }) {
   if (!p.url) return <div className="w-full h-full bg-surface-hover" />;
+  if (p.type === 'video') {
+    return (
+      <video
+        src={p.url}
+        muted
+        playsInline
+        preload="metadata"
+        className="w-full h-full object-cover pointer-events-none"
+      />
+    );
+  }
   return <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />;
 }
 
@@ -119,7 +137,7 @@ function ContentCard({ item }: { item: ContentItem }) {
 
   return (
     <div
-      onClick={() => router.push(`/content/${item.id}`)}
+      onClick={() => router.push(targetUrlFor(item))}
       className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer group"
     >
       <PreviewGrid previews={item.previews} />

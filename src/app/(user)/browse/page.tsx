@@ -26,6 +26,7 @@ interface ContentItem {
   totalItems: number;
   previews: PreviewItem[];
   videoPreviewUrl?: string | null;
+  series?: { id: string; type?: 'normal' | 'reels' | 'comic' } | null;
   creator: { id: string; name: string; avatarUrl?: string };
 }
 
@@ -93,6 +94,17 @@ function getAspectStyle(p: PreviewItem): React.CSSProperties {
 
 function PreviewMedia({ p }: { p: PreviewItem }) {
   if (!p.url) return <div className="w-full h-full bg-surface-hover" />;
+  if (p.type === 'video') {
+    return (
+      <video
+        src={p.url}
+        muted
+        playsInline
+        preload="metadata"
+        className="w-full h-full object-cover pointer-events-none"
+      />
+    );
+  }
   return <img src={p.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />;
 }
 
@@ -159,6 +171,14 @@ function ContentCard({ item }: { item: ContentItem }) {
   const [hovering, setHovering] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Reels and comic items belong to dedicated feeds — open them there
+  // instead of the generic content detail page.
+  const targetUrl = item.series?.type === 'reels'
+    ? `/reels?seriesId=${item.series.id}&start=${item.id}`
+    : item.series?.type === 'comic'
+    ? `/comics/${item.series.id}/read/${item.id}`
+    : `/content/${item.id}`;
+
   // Desktop hover-to-play. Mobile (no hover capability) keeps the static
   // poster + play badge — tapping the card navigates to the detail page.
   const canHoverPlay = !!item.videoPreviewUrl;
@@ -176,7 +196,7 @@ function ContentCard({ item }: { item: ContentItem }) {
 
   return (
     <div
-      onClick={() => router.push(`/content/${item.id}`)}
+      onClick={() => router.push(targetUrl)}
       onMouseEnter={() => canHoverPlay && setHovering(true)}
       onMouseLeave={() => canHoverPlay && setHovering(false)}
       className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer group"
