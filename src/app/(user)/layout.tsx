@@ -87,10 +87,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   const renderSidebarContent = () => (
     <>
-      <div className="h-14 flex items-center justify-center gap-2 border-b border-border">
+      <button
+        type="button"
+        onClick={() => handleNav('/browse')}
+        className="h-14 flex items-center justify-center gap-2 border-b border-border cursor-pointer hover:bg-surface-hover transition-colors"
+      >
         <img src="/logo.jpg" alt="OnlyBae" className="w-8 h-8 rounded-full" />
         <span className="text-xl font-semibold text-foreground tracking-tight">OnlyBae</span>
-      </div>
+      </button>
 
       {isAuthenticated && user && (
         <div className="px-4 py-3 border-b border-border">
@@ -181,10 +185,14 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         >
           <FontAwesomeIcon icon={faBars} className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <button
+          type="button"
+          onClick={() => router.push('/browse')}
+          className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+        >
           <img src="/logo.jpg" alt="OnlyBae" className="w-7 h-7 rounded-full" />
           <span className="text-base font-semibold text-foreground truncate">OnlyBae</span>
-        </div>
+        </button>
         {isAuthenticated && user && (
           <div className="flex items-center gap-2">
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${membershipColors[user.membershipLevel] || membershipColors.free}`}>
