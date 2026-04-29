@@ -70,6 +70,32 @@ function targetUrlFor(item: ContentItem) {
   return `/content/${item.id}`;
 }
 
+function TypeBadge({ type, totalItems }: { type: string; totalItems: number }) {
+  if (type === 'video') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold bg-black/60 text-white backdrop-blur-sm">
+        <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+        VIDEO
+      </span>
+    );
+  }
+  if (type === 'mixed') {
+    return <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-black/60 text-white backdrop-blur-sm">MIXED</span>;
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold bg-black/60 text-white backdrop-blur-sm">
+      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" /></svg>
+      {totalItems > 1 ? `${totalItems} PHOTOS` : 'PHOTO'}
+    </span>
+  );
+}
+
+function SeriesBadge({ seriesType }: { seriesType?: 'normal' | 'reels' | 'comic' }) {
+  if (seriesType === 'reels') return <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-500/85 text-white backdrop-blur-sm">REELS</span>;
+  if (seriesType === 'comic') return <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-blue-500/85 text-white backdrop-blur-sm">COMIC</span>;
+  return null;
+}
+
 function getAspectStyle(p: PreviewItem): React.CSSProperties {
   if (p.width && p.height) return { aspectRatio: `${p.width} / ${p.height}` };
   if (p.orientation === 'landscape') return { aspectRatio: '16 / 9' };
@@ -133,7 +159,13 @@ function ContentCard({ item }: { item: ContentItem }) {
       onClick={() => router.push(targetUrlFor(item))}
       className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer group"
     >
-      <PreviewGrid previews={item.previews} />
+      <div className="relative">
+        <PreviewGrid previews={item.previews} />
+        <div className="absolute top-2 left-2 flex gap-1 pointer-events-none">
+          <TypeBadge type={item.type} totalItems={item.totalItems} />
+          <SeriesBadge seriesType={item.series?.type} />
+        </div>
+      </div>
       <div className="p-4">
         <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">
           {item.title}

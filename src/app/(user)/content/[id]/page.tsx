@@ -21,7 +21,7 @@ interface ContentDetail {
   isFavorited: boolean;
   creator: { id: string; name: string; avatarUrl?: string };
   createdAt: string;
-  series?: { id: string; title: string; type?: 'normal' | 'reels' };
+  series?: { id: string; title: string; type?: 'normal' | 'reels' | 'comic' };
   orderInSeries?: number;
   workflowJson?: string;
 }
@@ -576,8 +576,15 @@ export default function ContentDetailPage() {
           {/* Details */}
           <div className="flex-1 p-4 md:p-6">
             {content.series && (
-              <a href={`/series/${content.series.id}`} className="text-xs text-accent hover:underline">
-                Part of: {content.series.title}{content.orderInSeries ? ` · #${content.orderInSeries}` : ''}
+              <a
+                href={
+                  content.series.type === 'reels' ? `/reels?seriesId=${content.series.id}`
+                  : content.series.type === 'comic' ? `/comics/${content.series.id}`
+                  : `/series/${content.series.id}`
+                }
+                className="text-xs text-accent hover:underline"
+              >
+                Part of: {content.series.title}{content.orderInSeries ? ` · #${content.orderInSeries}` : ''} →
               </a>
             )}
             <h1 className="text-xl md:text-2xl font-semibold text-foreground tracking-tight mb-2">
