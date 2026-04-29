@@ -25,6 +25,7 @@ interface ContentItem {
   favoriteCount: number;
   totalItems: number;
   previews: PreviewItem[];
+  videoPreviewUrl?: string | null;
   creator: { id: string; name: string; avatarUrl?: string };
 }
 
@@ -155,13 +156,54 @@ function PreviewGrid({ previews }: { previews: PreviewItem[] }) {
 
 function ContentCard({ item }: { item: ContentItem }) {
   const router = useRouter();
+  const [hovering, setHovering] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Desktop hover-to-play. Mobile (no hover capability) keeps the static
+  // poster + play badge — tapping the card navigates to the detail page.
+  const canHoverPlay = !!item.videoPreviewUrl;
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (hovering) {
+      v.currentTime = 0;
+      v.play().catch(() => { /* autoplay blocked; ignore */ });
+    } else {
+      v.pause();
+    }
+  }, [hovering]);
 
   return (
     <div
       onClick={() => router.push(`/content/${item.id}`)}
+      onMouseEnter={() => canHoverPlay && setHovering(true)}
+      onMouseLeave={() => canHoverPlay && setHovering(false)}
       className="bg-surface border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer group"
     >
-      <PreviewGrid previews={item.previews} />
+      <div className="relative">
+        <PreviewGrid previews={item.previews} />
+        {canHoverPlay && hovering && (
+          <video
+            ref={videoRef}
+            src={item.videoPreviewUrl ?? undefined}
+            muted
+            loop
+            playsInline
+            preload="none"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          />
+        )}
+        {canHoverPlay && (
+          <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity ${hovering ? 'opacity-0' : 'opacity-100'}`}>
+            <div className="w-12 h-12 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
+              <svg className="w-5 h-5 text-white drop-shadow translate-x-px" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+        )}
+      </div>
       <div className="p-3">
         <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">
           {item.title}
