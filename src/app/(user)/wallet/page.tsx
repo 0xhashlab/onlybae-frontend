@@ -42,9 +42,20 @@ const PRESETS = [5, 10, 25, 50, 100, 200];
 
 const STATUS_META: Record<OrderStatus, { icon: typeof faCircleCheck; color: string; bg: string; label: string }> = {
   completed: { icon: faCircleCheck, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Completed' },
-  pending:   { icon: faClock,       color: 'text-amber-400',   bg: 'bg-amber-500/10',   label: 'Processing' },
+  pending:   { icon: faClock,       color: 'text-amber-400',   bg: 'bg-amber-500/10',   label: 'Awaiting payment' },
   failed:    { icon: faCircleXmark, color: 'text-red-400',     bg: 'bg-red-500/10',     label: 'Failed' },
 };
+
+// AllScale checkout intents expire ~30 min after creation. Pending orders
+// older than this almost certainly mean the user abandoned the checkout —
+// display them as expired so they don't look like stuck "processing" charges.
+const STALE_PENDING_MS = 30 * 60 * 1000;
+function statusMetaFor(o: TopupOrder) {
+  if (o.status === 'pending' && Date.now() - new Date(o.createdAt).getTime() > STALE_PENDING_MS) {
+    return { icon: faCircleXmark, color: 'text-muted', bg: 'bg-zinc-700/30', label: 'Expired' };
+  }
+  return STATUS_META[o.status];
+}
 
 export default function WalletPage() {
   const searchParams = useSearchParams();
@@ -320,7 +331,7 @@ export default function WalletPage() {
         ) : (
           <div className="divide-y divide-border">
             {info.items.map((o) => {
-              const meta = STATUS_META[o.status];
+              const meta = statusMetaFor(o);
               return (
                 <div key={o.id} className="px-5 py-3 flex items-center gap-3">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${meta.bg}`}>
