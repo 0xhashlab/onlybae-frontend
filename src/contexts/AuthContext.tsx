@@ -34,6 +34,8 @@ interface AuthContextType {
   login: (token: string) => boolean;
   logout: () => void;
   loginWithGoogle: () => void;
+  renderGoogleButton: (el: HTMLElement) => void;
+  googleReady: boolean;
   getToken: () => string | null;
   refreshUser: () => Promise<void>;
 }
@@ -141,12 +143,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Trigger Google One Tap / popup
+  // Trigger Google One Tap / popup. Kept for backwards compatibility but the
+  // FedCM-based prompt() can be silently rate-limited by the browser after a
+  // user dismisses it once. Prefer renderGoogleButton() below.
   const loginWithGoogle = (): void => {
     const google = (window as any).google;
-    if (google?.accounts?.id) {
-      google.accounts.id.prompt();
-    }
+    google?.accounts?.id?.prompt?.();
+  };
+
+  // Render the official Google Sign-In button into the given element. Always
+  // works (no FedCM cooldown) and uses a popup the user explicitly clicks.
+  const renderGoogleButton = (el: HTMLElement): void => {
+    const google = (window as any).google;
+    if (!google?.accounts?.id) return;
+    el.innerHTML = '';
+    google.accounts.id.renderButton(el, {
+      type: 'standard',
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+      width: el.clientWidth || 320,
+    });
   };
 
   // Load Google Identity Services SDK
@@ -237,7 +256,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isAuthenticated]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, loginWithGoogle, getToken, refreshUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, loginWithGoogle, renderGoogleButton, googleReady, getToken, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
