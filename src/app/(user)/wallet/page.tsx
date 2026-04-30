@@ -9,6 +9,7 @@ import {
   faCoins, faCircleCheck, faCircleXmark, faClock, faArrowRight,
   faCrown, faInfinity, faCalendar,
 } from '@fortawesome/free-solid-svg-icons';
+import CryptoBuyingGuide from '@/components/CryptoBuyingGuide';
 
 type OrderStatus = 'pending' | 'completed' | 'failed';
 
@@ -72,6 +73,11 @@ export default function WalletPage() {
   const [error, setError] = useState<string | null>(null);
 
   const returnedOrderId = searchParams.get('order_id');
+  // Order we just created locally (when user pays in a new tab and stays on
+  // this page). Falls back to the URL-returned id when AllScale redirects
+  // the user back here directly.
+  const [trackedOrderId, setTrackedOrderId] = useState<string | null>(null);
+  const pendingOrderId = trackedOrderId || returnedOrderId;
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -91,27 +97,31 @@ export default function WalletPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Poll order status when returning from AllScale
+  // Poll the pending order — covers both:
+  //   • user paid in a NEW tab and stayed here (trackedOrderId)
+  //   • user got redirected back here by AllScale (returnedOrderId from URL)
+  // Polls for up to 5 min so on-chain confirms have time to land.
   useEffect(() => {
-    if (!returnedOrderId) return;
+    if (!pendingOrderId) return;
     let elapsed = 0;
     pollRef.current = setInterval(async () => {
       elapsed += 3;
       try {
-        const res = await userApi.getTopupOrder(returnedOrderId);
+        const res = await userApi.getTopupOrder(pendingOrderId);
         if (res.data.status === 'completed') {
           refreshUser();
           load();
           clearInterval(pollRef.current!);
-          router.replace('/wallet');
-        } else if (res.data.status === 'failed' || elapsed >= 60) {
+          setTrackedOrderId(null);
+          if (returnedOrderId) router.replace('/wallet');
+        } else if (res.data.status === 'failed' || elapsed >= 300) {
           load();
           clearInterval(pollRef.current!);
         }
       } catch { /* keep polling */ }
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [returnedOrderId, refreshUser, load, router]);
+  }, [pendingOrderId, returnedOrderId, refreshUser, load, router]);
 
   const amountUsd = customUsd ? parseFloat(customUsd) : selectedUsd;
   const minUsd = info?.minDepositUsd ?? 1;
@@ -125,9 +135,13 @@ export default function WalletPage() {
     setError(null);
     try {
       const res = await userApi.createTopup(amountUsd);
-      window.location.href = res.data.checkoutUrl;
+      // Open AllScale checkout in a new tab so this page keeps polling.
+      window.open(res.data.checkoutUrl, '_blank', 'noopener,noreferrer');
+      setTrackedOrderId(res.data.orderId);
+      load();
     } catch (e) {
       setError((e as Error).message || 'Failed to create checkout');
+    } finally {
       setSubmitting(false);
     }
   };
@@ -137,9 +151,12 @@ export default function WalletPage() {
     setError(null);
     try {
       const res = await userApi.subscribeMembership(plan);
-      window.location.href = res.data.checkoutUrl;
+      window.open(res.data.checkoutUrl, '_blank', 'noopener,noreferrer');
+      setTrackedOrderId(res.data.orderId);
+      load();
     } catch (e) {
       setError((e as Error).message || 'Failed to start subscription');
+    } finally {
       setSubscribingPlan(null);
     }
   };
@@ -188,11 +205,15 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Returned from AllScale notice */}
-      {returnedOrderId && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-400 flex items-center gap-2">
-          <FontAwesomeIcon icon={faClock} className="w-4 h-4 animate-pulse" />
-          Confirming your payment on-chain… it will update within a minute.
+      {/* Pending payment notice (just-created or returned-from-AllScale) */}
+      {pendingOrderId && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-400 flex items-start gap-2">
+          <FontAwesomeIcon icon={faClock} className="w-4 h-4 mt-0.5 animate-pulse shrink-0" />
+          <span>
+            Confirming your payment on-chain… this page will update automatically once
+            the USDT transfer lands (usually under a minute). You can finish paying in
+            the other tab — don&apos;t close this one.
+          </span>
         </div>
       )}
 
@@ -308,16 +329,19 @@ export default function WalletPage() {
 
         <button type="button" onClick={handlePay} disabled={submitting || !amountValid}
           className="w-full h-12 rounded-xl bg-accent text-black font-semibold text-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity">
-          {submitting ? 'Redirecting to checkout…' : (
+          {submitting ? 'Opening checkout…' : (
             <>
               Pay ${amountUsd.toFixed(2)} with USDT <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
             </>
           )}
         </button>
         <p className="text-xs text-muted/70 text-center">
-          Secure checkout by AllScale — pay with any crypto wallet.
+          Secure checkout by AllScale — opens in a new tab.
         </p>
       </div>
+
+      {/* ── How to buy crypto ── */}
+      <CryptoBuyingGuide />
 
       {/* ── Order history ── */}
       <div className="bg-surface rounded-2xl border border-border overflow-hidden">
