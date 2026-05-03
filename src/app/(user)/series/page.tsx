@@ -95,7 +95,14 @@ export default function SeriesBrowse() {
                       : 'bg-surface border border-border rounded-xl overflow-hidden hover:shadow-lg hover:border-border/80'
                   }`}
                 >
-                  <SeriesCover stack={s.coverStack} title={s.title} bare={hasStack} />
+                  <SeriesCover
+                    stack={s.coverStack}
+                    title={s.title}
+                    bare={hasStack}
+                    imageCount={s.imageCount}
+                    videoCount={s.videoCount}
+                    totalItems={s.totalItems}
+                  />
                   <div className={hasStack ? 'pt-3 px-1' : 'p-3'}>
                     <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">{s.title}</h3>
                     <p className="text-xs text-muted mt-1">{s.creator?.name} · {s.contentCount || 0} contents</p>
@@ -132,7 +139,57 @@ export default function SeriesBrowse() {
  * card sits flush with the bottom of the container, each card behind
  * shifts UP by a fixed sliver height so its top edge is visible.
  */
-function SeriesCover({ stack, title, bare = false }: { stack?: string[]; title?: string; bare?: boolean }) {
+/**
+ * Small black-pill badge in the same visual language as the homepage
+ * TypeBadge. Says "X PHOTOS" / "X VIDEOS" / "MIXED · N" depending on
+ * what the series contains.
+ */
+function ItemCountBadge({
+  imageCount = 0, videoCount = 0, totalItems = 0,
+}: { imageCount?: number; videoCount?: number; totalItems?: number }) {
+  const total = totalItems || imageCount + videoCount;
+  if (!total) return null;
+
+  let label: string;
+  let icon: React.ReactNode;
+  if (imageCount > 0 && videoCount > 0) {
+    label = `MIXED · ${total}`;
+    icon = null;
+  } else if (videoCount > 0) {
+    label = videoCount > 1 ? `${videoCount} VIDEOS` : 'VIDEO';
+    icon = (
+      <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z" />
+      </svg>
+    );
+  } else {
+    label = imageCount > 1 ? `${imageCount} PHOTOS` : 'PHOTO';
+    icon = (
+      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold bg-black/60 text-white backdrop-blur-sm pointer-events-none">
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function SeriesCover({
+  stack, title, bare = false,
+  imageCount = 0, videoCount = 0, totalItems = 0,
+}: {
+  stack?: string[];
+  title?: string;
+  bare?: boolean;
+  imageCount?: number;
+  videoCount?: number;
+  totalItems?: number;
+}) {
   const urls = (stack || []).slice(0, 5);
   const hasStack = urls.length >= 2;
   const single = urls[0];
@@ -147,8 +204,11 @@ function SeriesCover({ stack, title, bare = false }: { stack?: string[]; title?:
 
   if (!hasStack) {
     return (
-      <div className="h-40 bg-surface-hover overflow-hidden">
+      <div className="relative h-40 bg-surface-hover overflow-hidden">
         <img src={single} alt={title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        <div className="absolute top-2 left-2">
+          <ItemCountBadge imageCount={imageCount} videoCount={videoCount} totalItems={totalItems} />
+        </div>
       </div>
     );
   }
@@ -202,6 +262,12 @@ function SeriesCover({ stack, title, bare = false }: { stack?: string[]; title?:
             {/* Dim non-top cards so the front one is clearly the focus */}
             {depth > 0 && (
               <div className="pointer-events-none absolute inset-0 bg-black/20" />
+            )}
+            {/* Item-count badge sits on the front (top) card only */}
+            {depth === 0 && (
+              <div className="absolute top-2 left-2">
+                <ItemCountBadge imageCount={imageCount} videoCount={videoCount} totalItems={totalItems} />
+              </div>
             )}
           </div>
         );
