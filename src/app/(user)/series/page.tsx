@@ -142,15 +142,17 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
     );
   }
 
-  // depth 0 = front (top) card; bigger depth = further back in the pile.
-  // Render deepest first so DOM order = paint order (back-to-front).
+  // depth 0 = front (top) card, anchored bottom-left of the container.
+  // depth N = back card, anchored toward upper-right with its top + right
+  // edges peeking out as slivers. Render deepest first so DOM order =
+  // paint order (back paints first, front paints over).
   const ordered = [...urls].map((url, depth) => ({ url, depth })).reverse();
 
-  // Each back card peeks out 8px above the next. Slight horizontal nudge
-  // (alternating sides) makes the slivers easier to count visually.
-  const SLIVER_PX = 8;
-  const FRONT_HEIGHT_PX = 144; // h-36 ish, the actual visible front card
-  const containerHeight = FRONT_HEIGHT_PX + (urls.length - 1) * SLIVER_PX;
+  const SLIVER_Y = 8;          // px each back card peeks UP
+  const SLIVER_X = 12;         // px each back card peeks RIGHT
+  const FRONT_HEIGHT = 140;    // visible card height
+  const maxDepth = urls.length - 1;
+  const containerHeight = FRONT_HEIGHT + maxDepth * SLIVER_Y;
 
   return (
     <div
@@ -158,27 +160,25 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
       style={{ height: containerHeight }}
     >
       {ordered.map(({ url, depth }) => {
-        // Translate UP from the front card's resting position so each back
-        // card's top edge sits above the previous card.
-        const translateY = -depth * SLIVER_PX;
-        // Tiny horizontal shift just so the slivers don't all line up
-        // perfectly (looks more like a real, slightly-messy folder).
-        const translateX = depth === 0 ? 0 : (depth % 2 === 0 ? -2 : 2) * depth;
+        // Anchor each card with both left+right so the absolute width
+        // (container width minus the total fan-out) is identical across
+        // cards; only the position changes.
+        const left = depth * SLIVER_X;
+        const right = (maxDepth - depth) * SLIVER_X;
+        const bottom = depth * SLIVER_Y;
         const opacity = depth === 0 ? 1 : Math.max(0.7, 1 - depth * 0.08);
 
         return (
           <div
             key={`${url}-${depth}`}
-            className="absolute left-0 right-0 bottom-0 overflow-hidden border border-border/70 shadow-md transition-transform duration-300 ease-out group-hover:translate-x-0"
+            className="absolute overflow-hidden border border-border/70 rounded-lg shadow-md transition-all duration-300 ease-out"
             style={{
-              height: FRONT_HEIGHT_PX,
-              transform: `translate(${translateX}px, ${translateY}px)`,
+              left,
+              right,
+              bottom,
+              height: FRONT_HEIGHT,
               opacity,
               zIndex: 10 - depth,
-              borderTopLeftRadius: 8,
-              borderTopRightRadius: 8,
-              borderBottomLeftRadius: depth === 0 ? 8 : 0,
-              borderBottomRightRadius: depth === 0 ? 8 : 0,
             }}
           >
             <img
@@ -188,7 +188,7 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
               decoding="async"
               className="w-full h-full object-cover"
             />
-            {/* Dim non-top cards a touch so the front one is clearly the focus */}
+            {/* Dim non-top cards so the front one is clearly the focus */}
             {depth > 0 && (
               <div className="pointer-events-none absolute inset-0 bg-black/20" />
             )}
