@@ -85,13 +85,7 @@ export default function SeriesBrowse() {
                 onClick={() => router.push(`/series/${s.id}`)}
                 className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:border-border/80 transition-all group"
               >
-                <div className="h-40 bg-surface-hover flex items-center justify-center">
-                  {s.coverUrl ? (
-                    <img src={s.coverUrl} alt={s.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                  ) : (
-                    <svg className="w-12 h-12 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
-                  )}
-                </div>
+                <SeriesCover stack={s.coverStack} title={s.title} />
                 <div className="p-3">
                   <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">{s.title}</h3>
                   <p className="text-xs text-muted mt-1">{s.creator?.name} · {s.contentCount || 0} contents</p>
@@ -111,6 +105,70 @@ export default function SeriesBrowse() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Stacked-card cover. With multiple free preview images we render a tilted
+ * deck (top card centered, additional cards fanned out behind with
+ * progressive offset / rotation / dim). Falls back to a single image — or
+ * the book placeholder — when the deck is short.
+ */
+function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
+  const urls = (stack || []).slice(0, 5);
+  const hasStack = urls.length >= 2;
+  const single = urls[0];
+
+  if (!single) {
+    return (
+      <div className="h-40 bg-surface-hover flex items-center justify-center">
+        <svg className="w-12 h-12 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+      </div>
+    );
+  }
+
+  if (!hasStack) {
+    return (
+      <div className="h-40 bg-surface-hover overflow-hidden">
+        <img src={single} alt={title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
+  // Reverse so the FIRST (top) card renders last in DOM and paints on top.
+  // Deeper cards get more offset, rotation, dim.
+  const ordered = [...urls].reverse();
+  const topIndex = ordered.length - 1;
+
+  return (
+    <div className="relative h-40 bg-surface-hover overflow-hidden">
+      {ordered.map((url, i) => {
+        const depth = topIndex - i;
+        const offset = depth * 6;
+        const rotate = depth === 0 ? 0 : (i % 2 === 0 ? -depth * 2 : depth * 2);
+        const opacity = depth === 0 ? 1 : Math.max(0.45, 1 - depth * 0.18);
+        const scale = 1 - depth * 0.04;
+        return (
+          <div
+            key={`${url}-${i}`}
+            className="absolute inset-2 rounded-md overflow-hidden border border-border/60 shadow-md transition-transform"
+            style={{
+              transform: `translate(${offset}px, ${-offset}px) rotate(${rotate}deg) scale(${scale})`,
+              opacity,
+              zIndex: i,
+            }}
+          >
+            <img
+              src={url}
+              alt={depth === 0 ? title : ''}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
