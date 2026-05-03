@@ -110,12 +110,16 @@ export default function SeriesBrowse() {
 }
 
 /**
- * Diagonal card stack. At rest, the series' contents render as a deck
- * fanned diagonally to the lower-right with progressive rotation and
- * shadow so it reads as a real pile of cards. On hover, the cards spread
- * further and the top card lifts and tilts to suggest "flipping through"
+ * Folder-style stacked-card cover. Renders the contents as a vertical
+ * stack of cards where each card behind the top one peeks out above as a
+ * visible sliver — like a manila folder full of papers, or a stack of
+ * recipe cards where you can clearly see the top edge of every card in
  * the deck. Falls back to a single image — or the book placeholder —
  * when the deck has < 2 cards.
+ *
+ * Layout: container reserves room at the top for the slivers; the front
+ * card sits flush with the bottom of the container, each card behind
+ * shifts UP by a fixed sliver height so its top edge is visible.
  */
 function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
   const urls = (stack || []).slice(0, 5);
@@ -138,42 +142,43 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
     );
   }
 
-  // Render deepest card first so the top card paints last.
-  // depth 0 = top card; bigger depth = further back in the pile.
-  const ordered = [...urls].map((url, i) => ({ url, depth: i })).reverse();
+  // depth 0 = front (top) card; bigger depth = further back in the pile.
+  // Render deepest first so DOM order = paint order (back-to-front).
+  const ordered = [...urls].map((url, depth) => ({ url, depth })).reverse();
+
+  // Each back card peeks out 8px above the next. Slight horizontal nudge
+  // (alternating sides) makes the slivers easier to count visually.
+  const SLIVER_PX = 8;
+  const FRONT_HEIGHT_PX = 144; // h-36 ish, the actual visible front card
+  const containerHeight = FRONT_HEIGHT_PX + (urls.length - 1) * SLIVER_PX;
 
   return (
     <div
-      className="relative h-44 bg-surface-hover overflow-hidden"
-      style={{ perspective: '900px' }}
+      className="relative w-full bg-surface-hover overflow-hidden"
+      style={{ height: containerHeight }}
     >
       {ordered.map(({ url, depth }) => {
-        // Resting state: diagonal fan to the lower-right.
-        const restX = depth * 10;
-        const restY = depth * 8;
-        const restRot = depth * -5;          // each deeper card rotates a bit more left
-        const restScale = 1 - depth * 0.05;
-
-        // Hover state: spread the deck out further along the diagonal,
-        // and lift the top card with a slight 3D tilt to suggest a flip.
-        const hoverX = depth * 18;
-        const hoverY = depth * 14;
-        const hoverRot = depth * -10;
-        const hoverScale = 1 - depth * 0.04;
-        const hoverTilt = depth === 0 ? 'rotateX(8deg) rotateY(-6deg)' : '';
-
-        const opacity = depth === 0 ? 1 : Math.max(0.55, 1 - depth * 0.14);
+        // Translate UP from the front card's resting position so each back
+        // card's top edge sits above the previous card.
+        const translateY = -depth * SLIVER_PX;
+        // Tiny horizontal shift just so the slivers don't all line up
+        // perfectly (looks more like a real, slightly-messy folder).
+        const translateX = depth === 0 ? 0 : (depth % 2 === 0 ? -2 : 2) * depth;
+        const opacity = depth === 0 ? 1 : Math.max(0.7, 1 - depth * 0.08);
 
         return (
           <div
             key={`${url}-${depth}`}
-            className="absolute inset-3 rounded-lg overflow-hidden border border-border/60 shadow-lg transition-transform duration-500 ease-out will-change-transform group-hover:[transform:var(--hover-tf)]"
+            className="absolute left-0 right-0 bottom-0 overflow-hidden border border-border/70 shadow-md transition-transform duration-300 ease-out group-hover:translate-x-0"
             style={{
-              transform: `translate(${restX}px, ${restY}px) rotate(${restRot}deg) scale(${restScale})`,
+              height: FRONT_HEIGHT_PX,
+              transform: `translate(${translateX}px, ${translateY}px)`,
               opacity,
               zIndex: 10 - depth,
-              transformOrigin: 'center center',
-              ['--hover-tf' as string]: `translate(${hoverX}px, ${hoverY}px) rotate(${hoverRot}deg) scale(${hoverScale}) ${hoverTilt}`.trim(),
+              borderTopLeftRadius: 8,
+              borderTopRightRadius: 8,
+              borderBottomLeftRadius: depth === 0 ? 8 : 0,
+              borderBottomRightRadius: depth === 0 ? 8 : 0,
             }}
           >
             <img
@@ -183,8 +188,10 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
               decoding="async"
               className="w-full h-full object-cover"
             />
-            {/* Subtle inner edge to make each card read as a discrete object */}
-            <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
+            {/* Dim non-top cards a touch so the front one is clearly the focus */}
+            {depth > 0 && (
+              <div className="pointer-events-none absolute inset-0 bg-black/20" />
+            )}
           </div>
         );
       })}
