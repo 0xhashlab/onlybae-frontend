@@ -110,10 +110,12 @@ export default function SeriesBrowse() {
 }
 
 /**
- * Stacked-card cover. With multiple free preview images we render a tilted
- * deck (top card centered, additional cards fanned out behind with
- * progressive offset / rotation / dim). Falls back to a single image — or
- * the book placeholder — when the deck is short.
+ * Diagonal card stack. At rest, the series' contents render as a deck
+ * fanned diagonally to the lower-right with progressive rotation and
+ * shadow so it reads as a real pile of cards. On hover, the cards spread
+ * further and the top card lifts and tilts to suggest "flipping through"
+ * the deck. Falls back to a single image — or the book placeholder —
+ * when the deck has < 2 cards.
  */
 function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
   const urls = (stack || []).slice(0, 5);
@@ -136,27 +138,42 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
     );
   }
 
-  // Reverse so the FIRST (top) card renders last in DOM and paints on top.
-  // Deeper cards get more offset, rotation, dim.
-  const ordered = [...urls].reverse();
-  const topIndex = ordered.length - 1;
+  // Render deepest card first so the top card paints last.
+  // depth 0 = top card; bigger depth = further back in the pile.
+  const ordered = [...urls].map((url, i) => ({ url, depth: i })).reverse();
 
   return (
-    <div className="relative h-40 bg-surface-hover overflow-hidden">
-      {ordered.map((url, i) => {
-        const depth = topIndex - i;
-        const offset = depth * 6;
-        const rotate = depth === 0 ? 0 : (i % 2 === 0 ? -depth * 2 : depth * 2);
-        const opacity = depth === 0 ? 1 : Math.max(0.45, 1 - depth * 0.18);
-        const scale = 1 - depth * 0.04;
+    <div
+      className="relative h-44 bg-surface-hover overflow-hidden"
+      style={{ perspective: '900px' }}
+    >
+      {ordered.map(({ url, depth }) => {
+        // Resting state: diagonal fan to the lower-right.
+        const restX = depth * 10;
+        const restY = depth * 8;
+        const restRot = depth * -5;          // each deeper card rotates a bit more left
+        const restScale = 1 - depth * 0.05;
+
+        // Hover state: spread the deck out further along the diagonal,
+        // and lift the top card with a slight 3D tilt to suggest a flip.
+        const hoverX = depth * 18;
+        const hoverY = depth * 14;
+        const hoverRot = depth * -10;
+        const hoverScale = 1 - depth * 0.04;
+        const hoverTilt = depth === 0 ? 'rotateX(8deg) rotateY(-6deg)' : '';
+
+        const opacity = depth === 0 ? 1 : Math.max(0.55, 1 - depth * 0.14);
+
         return (
           <div
-            key={`${url}-${i}`}
-            className="absolute inset-2 rounded-md overflow-hidden border border-border/60 shadow-md transition-transform"
+            key={`${url}-${depth}`}
+            className="absolute inset-3 rounded-lg overflow-hidden border border-border/60 shadow-lg transition-transform duration-500 ease-out will-change-transform group-hover:[transform:var(--hover-tf)]"
             style={{
-              transform: `translate(${offset}px, ${-offset}px) rotate(${rotate}deg) scale(${scale})`,
+              transform: `translate(${restX}px, ${restY}px) rotate(${restRot}deg) scale(${restScale})`,
               opacity,
-              zIndex: i,
+              zIndex: 10 - depth,
+              transformOrigin: 'center center',
+              ['--hover-tf' as string]: `translate(${hoverX}px, ${hoverY}px) rotate(${hoverRot}deg) scale(${hoverScale}) ${hoverTilt}`.trim(),
             }}
           >
             <img
@@ -166,6 +183,8 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
               decoding="async"
               className="w-full h-full object-cover"
             />
+            {/* Subtle inner edge to make each card read as a discrete object */}
+            <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5" />
           </div>
         );
       })}
