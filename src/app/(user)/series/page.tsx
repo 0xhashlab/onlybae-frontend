@@ -79,19 +79,30 @@ export default function SeriesBrowse() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {series.map((s: any) => (
-              <div
-                key={s.id}
-                onClick={() => router.push(`/series/${s.id}`)}
-                className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:border-border/80 transition-all group"
-              >
-                <SeriesCover stack={s.coverStack} title={s.title} />
-                <div className="p-3">
-                  <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">{s.title}</h3>
-                  <p className="text-xs text-muted mt-1">{s.creator?.name} · {s.contentCount || 0} contents</p>
+            {series.map((s: any) => {
+              // When the series has multiple cards to stack, drop the outer
+              // chrome — the stack itself is the visual. Single-image and
+              // no-image series keep the rounded surface card so they don't
+              // look orphaned.
+              const hasStack = (s.coverStack?.length ?? 0) >= 2;
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => router.push(`/series/${s.id}`)}
+                  className={`cursor-pointer transition-all group ${
+                    hasStack
+                      ? ''
+                      : 'bg-surface border border-border rounded-xl overflow-hidden hover:shadow-lg hover:border-border/80'
+                  }`}
+                >
+                  <SeriesCover stack={s.coverStack} title={s.title} bare={hasStack} />
+                  <div className={hasStack ? 'pt-3 px-1' : 'p-3'}>
+                    <h3 className="text-sm font-medium text-foreground truncate group-hover:text-accent transition-colors">{s.title}</h3>
+                    <p className="text-xs text-muted mt-1">{s.creator?.name} · {s.contentCount || 0} contents</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} className="h-1" />
@@ -121,7 +132,7 @@ export default function SeriesBrowse() {
  * card sits flush with the bottom of the container, each card behind
  * shifts UP by a fixed sliver height so its top edge is visible.
  */
-function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
+function SeriesCover({ stack, title, bare = false }: { stack?: string[]; title?: string; bare?: boolean }) {
   const urls = (stack || []).slice(0, 5);
   const hasStack = urls.length >= 2;
   const single = urls[0];
@@ -156,7 +167,7 @@ function SeriesCover({ stack, title }: { stack?: string[]; title?: string }) {
 
   return (
     <div
-      className="relative w-full bg-surface-hover overflow-hidden"
+      className={`relative w-full ${bare ? '' : 'bg-surface-hover overflow-hidden'}`}
       style={{ height: containerHeight }}
     >
       {ordered.map(({ url, depth }) => {
